@@ -217,12 +217,11 @@ button{cursor:pointer;font-family:inherit}
     <div class="score-box"><div class="slopp" id="opplab">OPP</div><input class="si" type="number" id="sthem" value="0" min="0" onchange="saveScore()"></div>
   </div>
   <div class="sg">
+    <div class="sc"><div class="sl">Quarter</div><div class="sv" id="sqtr">Q1</div></div>
     <div class="sc"><div class="sl">Play #</div><div class="sv" id="spn">1</div></div>
-    <div class="sc"><div class="sl">To go</div><div class="sv" id="stg">10</div></div>
     <div class="sc"><div class="sl">Current drive</div><div class="svsm" id="sdr">&#8212;</div></div>
     <div class="sc"><div class="sl">Net yards</div><div class="sv" id="syd">0</div></div>
     <div class="sc"><div class="sl">Avg gain</div><div class="sv" id="sav">&#8212;</div></div>
-    <div class="sc"><div class="sl">Quarter</div><div class="sv" id="sqtr">Q1</div></div>
   </div>
   <div class="edit-banner" id="edit-banner">
     <div class="edit-banner-text" id="edit-banner-text">Editing play</div>
@@ -591,6 +590,7 @@ var PICKER_LABELS = {
 
 // Chains: after a field is picked, which field opens next
 var CHAIN_CALL = ['form','mot','hole','play'];
+var CHAIN_FULL = ['dn','form','mot','hole','play'];
 
 var pickerField = null;      // field id currently open
 var pickerChain = null;      // array of field ids, or null if single-field
@@ -702,7 +702,7 @@ function pickValue(val) {
     var nextIdx = idx + 1;
     setTimeout(function(){ openPicker(chain[nextIdx], chain, nextIdx); }, 120);
   } else {
-    var wasCall = (chain === CHAIN_CALL);
+    var wasCall = (chain === CHAIN_CALL || chain === CHAIN_FULL);
     pickerChain = null; pickerChainIdx = -1;
     // Play-call chain flows straight into yards. A Money formation short-circuits
     // the rest of the call but still continues to yards.
@@ -721,7 +721,9 @@ function pickValue(val) {
 function pkTap(fieldId) {
   var el = document.getElementById(fieldId);
   var isBlank = !el || !el.value;
-  // The play-call chain only runs when starting from a blank Formation
+  // Two ways into the same sequence: from Down for the whole thing, or from a
+  // blank Formation when the down is already right.
+  if (fieldId === 'dn' && !editId) { openPicker('dn', CHAIN_FULL, 0); return; }
   if (fieldId === 'form' && isBlank) { openPicker('form', CHAIN_CALL, 0); return; }
   openPicker(fieldId, null, -1);
 }
@@ -1007,10 +1009,8 @@ function syncDown(){
   updateToGo();
 }
 
-function updateToGo(){
-  var el = document.getElementById('stg');
-  if (el) el.textContent = currentToGo();
-}
+// The distance is shown on the keypad rather than the stat bar
+function updateToGo(){ /* no stat-bar chip */ }
 
 // Setting the down by hand to 1st asserts a new series
 function onDownChange(){
@@ -1823,6 +1823,26 @@ function walkDrives(ps){
   return { rows:rows, next:{ down:DOWNS[down-1], togo:togo } };
 }
 
+// Drives, in game order. A drive ends on a possession change, or on a 4th
+// down that did not convert (logged as whatever actually happened on the play).
+function computeDrives(ps){
+  var rows = walkDrives(ps).rows, drives = [], cur = null;
+  function fresh(){ return {plays:0, yards:0, pen:false, result:null}; }
+  rows.forEach(function(r){
+    if (!cur) cur = fresh();
+    if (r.penalty) cur.pen = true; else cur.plays++;
+    cur.yards += (r.p.yards||0);
+    if (PC.indexOf(r.p.result) >= 0){
+      cur.result = r.p.result; drives.push(cur); cur = null; return;
+    }
+    if (r.down === 4 && !r.converted && !r.penalty){
+      cur.result = 'Turnover on downs'; drives.push(cur); cur = null;
+    }
+  });
+  if (cur) { cur.result = null; drives.push(cur); }   // still in progress
+  return drives;
+}
+
 function emptyTeam(){
   return {totYds:0,rushYds:0,passYds:0,plays:0,turnovers:0,
           fd:0,fdRush:0,fdPass:0,fdPen:0,
@@ -1997,6 +2017,25 @@ function stPlayerTable(title, list){
     '<tbody>'+rows+'</tbody></table></div>';
 }
 
+function stDriveTable(ps){
+  var dr = computeDrives(ps);
+  if (!dr.length) return '';
+  var anyPen = false;
+  var rows = dr.map(function(x,i){
+    if (x.pen) anyPen = true;
+    var res = x.result ? x.result : '<span style="color:#6e6e73">In progress</span>';
+    return '<tr><td>'+(i+1)+'</td>'+
+      '<td>'+x.plays+(x.pen?'<span style="color:#c77700">*</span>':'')+'</td>'+
+      '<td>'+x.yards+'</td>'+
+      '<td style="text-align:left">'+res+'</td></tr>';
+  }).join('');
+  return '<div class="sth">Drives</div><div class="card" style="padding:10px 12px">'+
+    '<table class="lt"><thead><tr><th>Drive</th><th>Plays</th><th>Yards</th><th>Result</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table>'+
+    (anyPen ? '<div style="font-size:10px;color:#6e6e73;margin-top:6px">* drive included a penalty</div>' : '')+
+    '</div>';
+}
+
 function stRender(){
   if (stCurTab === 'season') {
     var el = document.getElementById('st-pane-season');
@@ -2018,8 +2057,8 @@ function stRender(){
   var head = '<div style="font-size:12px;color:#6e6e73;margin-bottom:10px">' +
     (game.homeAway==='away'?'@ ':'vs. ') + game.opponent + (dt?' \u2014 '+dt:'') +
     ' \u00b7 HB ' + (game.scoreUs||0) + ', ' + game.opponent + ' ' + (game.scoreThem||0) + '</div>';
-  g.innerHTML = head + stTeamCards(st.team, false) + stQQ(st) ;
-  function stQQ(x){ return stQBTable(x.qbs) + stPlayerTable('RB', pl.rb) + stPlayerTable('WR', pl.wr); }
+  g.innerHTML = head + stTeamCards(st.team, false) + stDriveTable(game.plays) +
+                stQBTable(st.qbs) + stPlayerTable('RB', pl.rb) + stPlayerTable('WR', pl.wr);
 }
 
 function buildBoxScoreText(g) {
