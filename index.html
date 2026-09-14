@@ -46,6 +46,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-siz
 .qt.active{background:#1a3a8c;color:#fff;border-color:#1a3a8c}
 .r4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
 .r3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.r5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}
 .r2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px}
 .fg{display:flex;flex-direction:column;gap:4px}
 .fl{font-size:10px;font-weight:600;color:#6e6e73;text-transform:uppercase;letter-spacing:.06em}
@@ -89,7 +90,7 @@ button{cursor:pointer;font-family:inherit}
 .toast.show{opacity:1}
 .au{animation:fl .5s ease}
 @keyframes fl{0%,100%{background:transparent}50%{background:#ddeeff}}
-@media(max-width:600px){.sg{grid-template-columns:repeat(3,1fr)}.r4{grid-template-columns:repeat(2,1fr)}.r3{grid-template-columns:repeat(2,1fr)}.a-g5{grid-template-columns:repeat(3,1fr)}.a-g4{grid-template-columns:repeat(2,1fr)}.a-g5t{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.stg{grid-template-columns:repeat(2,1fr)}.sg{grid-template-columns:repeat(3,1fr)}.r4{grid-template-columns:repeat(2,1fr)}.r3{grid-template-columns:repeat(2,1fr)}.r5{grid-template-columns:repeat(2,1fr)}.a-g5{grid-template-columns:repeat(3,1fr)}.a-g4{grid-template-columns:repeat(2,1fr)}.a-g5t{grid-template-columns:repeat(3,1fr)}}
 
 .a-stab{padding:5px 12px;border-radius:8px;border:.5px solid #d2d2d7;font-size:11px;font-weight:500;cursor:pointer;color:#6e6e73;background:#fff}
 .a-stab.active{background:#1a3a8c;color:#fff;border-color:#1a3a8c}
@@ -173,10 +174,16 @@ button{cursor:pointer;font-family:inherit}
 .kp-sc-td{background:#e6f1fb;color:#0c447c;border-color:#b5d4f4}
 .kp-disp{font-size:30px;font-weight:700;text-align:center;padding:12px;background:#f5f5f7;border-radius:10px;margin-bottom:12px;min-height:58px;color:#1d1d1f;letter-spacing:.02em}
 
-.gm-stab{padding:5px 12px;border-radius:8px;border:.5px solid #d2d2d7;font-size:11px;font-weight:500;cursor:pointer;color:#6e6e73;background:#fff}
-.gm-stab.active{background:#1a3a8c;color:#fff;border-color:#1a3a8c}
-.gm-pane{display:none}
-.gm-pane.active{display:block}
+.st-stab,.gm-stab{padding:5px 12px;border-radius:8px;border:.5px solid #d2d2d7;font-size:11px;font-weight:500;cursor:pointer;color:#6e6e73;background:#fff}
+.st-stab.active,.gm-stab.active{background:#1a3a8c;color:#fff;border-color:#1a3a8c}
+.gm-pane,.st-pane{display:none}
+.gm-pane.active,.st-pane.active{display:block}
+.stg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.stc{background:#fff;border-radius:10px;padding:9px 11px}
+.stl{font-size:10px;color:#6e6e73}
+.stv{font-size:19px;font-weight:600}
+.stsub{font-size:10px;color:#6e6e73}
+.sth{font-size:12px;font-weight:600;margin:14px 0 6px}
 </style>
 </head>
 <body>
@@ -189,7 +196,8 @@ button{cursor:pointer;font-family:inherit}
   <div class="offbanner" id="offbanner">&#9888; Offline &mdash; running from cache.</div>
   <div class="tabs">
     <button class="tab active" onclick="showTab('log')">Play Tracker</button>
-    <button class="tab" onclick="showTab('games')">Game Manager</button>
+    <button class="tab" onclick="showTab('stats')">Stats</button>
+  <button class="tab" onclick="showTab('games')">Game Manager</button>
   </div>
 </div>
 
@@ -210,6 +218,7 @@ button{cursor:pointer;font-family:inherit}
   </div>
   <div class="sg">
     <div class="sc"><div class="sl">Play #</div><div class="sv" id="spn">1</div></div>
+    <div class="sc"><div class="sl">To go</div><div class="sv" id="stg">10</div></div>
     <div class="sc"><div class="sl">Current drive</div><div class="svsm" id="sdr">&#8212;</div></div>
     <div class="sc"><div class="sl">Net yards</div><div class="sv" id="syd">0</div></div>
     <div class="sc"><div class="sl">Avg gain</div><div class="sv" id="sav">&#8212;</div></div>
@@ -228,7 +237,16 @@ button{cursor:pointer;font-family:inherit}
       <button class="qt" onclick="setQ(4,this)">Q4</button>
       <button class="qt" onclick="setQ('OT',this)">OT</button>
     </div>
-    <div class="r4">
+    <div class="r5">
+      <div class="fg"><label class="fl">Down</label>
+        <button type="button" class="pk-btn" id="pk-dn" onclick="pkTap('dn')"><span>1st</span></button>
+        <select id="dn" onchange="onDownChange()" style="display:none">
+          <option value="1st">1st</option>
+          <option value="2nd">2nd</option>
+          <option value="3rd">3rd</option>
+          <option value="4th">4th</option>
+        </select>
+      </div>
       <div class="fg"><label class="fl">Formation</label>
         <button type="button" class="pk-btn empty" id="pk-form" onclick="pkTap('form')"><span>&#8212;</span><span class="pk-caret">&#9662;</span></button>
         <select id="form" onchange="frmType()" style="display:none">
@@ -312,6 +330,17 @@ button{cursor:pointer;font-family:inherit}
   </div>
 </div>
 
+<div id="pane-stats" class="pane">
+  <div style="background:#fff;padding:10px 12px;border-bottom:1px solid #e5e5ea;display:flex;gap:6px">
+    <button class="st-stab active" onclick="stTab('game',this)">This game</button>
+    <button class="st-stab" onclick="stTab('season',this)">Season</button>
+  </div>
+  <div style="padding:12px">
+    <div id="st-pane-game" class="st-pane active"></div>
+    <div id="st-pane-season" class="st-pane"></div>
+  </div>
+</div>
+
 <div id="pane-games" class="pane">
   <div style="background:var(--color-background-primary);padding:10px 14px;border-bottom:.5px solid var(--color-border-tertiary);margin:0 -16px 12px">
     <div style="display:flex;gap:4px;flex-wrap:wrap">
@@ -327,7 +356,7 @@ button{cursor:pointer;font-family:inherit}
       <div class="brow">
         <button class="bp" onclick="expBackup()">&#8595; Export backup</button>
         <button class="bs" onclick="document.getElementById('impfile').click()">&#8593; Import backup</button>
-        <input type="file" id="impfile" accept=".json" style="display:none" onchange="impBackup(event)">
+        <input type="file" id="impfile" style="display:none" onchange="impBackup(event)">
       </div>
       <div class="bkn">Export saves all your games as a JSON file. Import restores from that file.</div>
     </div>
@@ -390,8 +419,12 @@ button{cursor:pointer;font-family:inherit}
 
 <div class="modal-overlay" id="keypad-modal" onclick="if(event.target===this)closeKeypad(true)">
   <div class="modal-box" style="max-width:300px">
-    <div class="modal-title" id="keypad-title">Enter value</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div class="modal-title" id="keypad-title" style="margin:0">Enter value</div>
+      <div id="kp-sit" style="font-size:13px;font-weight:600;color:#1a3a8c;display:none"></div>
+    </div>
     <div class="kp-disp" id="keypad-display">0</div>
+    <div id="kp-read" style="text-align:center;font-size:12px;color:#6e6e73;margin:-6px 0 8px;min-height:16px;display:none"></div>
     <div class="kp-grid">
       <button class="kp-key" onclick="kpDigit('7')">7</button>
       <button class="kp-key" onclick="kpDigit('8')">8</button>
@@ -540,9 +573,10 @@ function showTab(t){
   document.querySelectorAll('.tab').forEach(function(e){e.classList.remove('active');});
   document.querySelectorAll('.pane').forEach(function(e){e.classList.remove('active');});
   document.getElementById('pane-'+t).classList.add('active');
-  var tabIdx = (t==='log') ? 0 : 1;
+  var tabIdx = (t==='log') ? 0 : (t==='stats' ? 1 : 2);
   document.querySelectorAll('.tab')[tabIdx].classList.add('active');
   if(t==='games')drawGames();
+  if(t==='stats')stRender();
 }
 
 // Auto-fill yards when Touchdown is selected
@@ -551,7 +585,7 @@ function showTab(t){
 // reads .value keeps working untouched. The modal only changes how a value is chosen.
 
 var PICKER_LABELS = {
-  form:'Formation', mot:'Motion', hole:'Protection / Hole', play:'Play',
+  dn:'Down', form:'Formation', mot:'Motion', hole:'Protection / Hole', play:'Play',
   exec:'Gain / Loss', res:'Result', plyr:'Ball carrier / target', qb:'QB'
 };
 
@@ -719,6 +753,13 @@ function openKeypad(fieldId, title, allowNeg, onDone) {
     kpValue = n.replace('-','');
   }
   document.getElementById('keypad-title').textContent = title || 'Enter value';
+  var sit = document.getElementById('kp-sit');
+  if (sit) {
+    if (fieldId === 'yds') {
+      sit.style.display = 'block';
+      sit.textContent = (document.getElementById('dn').value || '1st') + ' & ' + currentToGo();
+    } else { sit.style.display = 'none'; }
+  }
   document.getElementById('kp-sign').style.visibility = kpAllowNeg ? 'visible' : 'hidden';
   // Result shortcuts only make sense on the yards keypad
   var sc = document.getElementById('kp-shortcuts');
@@ -730,6 +771,28 @@ function openKeypad(fieldId, title, allowNeg, onDone) {
 function kpRender() {
   var d = kpValue === '' ? '0' : kpValue;
   document.getElementById('keypad-display').textContent = (kpNeg && kpValue !== '' ? '-' : '') + d;
+  kpReadout();
+}
+
+// Live "what does this yardage mean" line under the number
+function kpReadout(){
+  var el = document.getElementById('kp-read');
+  if (!el) return;
+  if (kpField !== 'yds') { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  var togo = currentToGo();
+  var dn = document.getElementById('dn').value || '1st';
+  var v = kpValue === '' ? 0 : (kpNeg ? -1 : 1) * parseInt(kpValue, 10);
+  if (v >= togo) {
+    el.innerHTML = '<span style="color:#1a3a8c;font-weight:600">1st &amp; 10</span>';
+    return;
+  }
+  if (dn === '4th') {
+    el.innerHTML = '<span style="color:#c62828">Turnover on downs</span>';
+    return;
+  }
+  var next = DOWNS[DOWNS.indexOf(dn) + 1] || '4th';
+  el.textContent = next + ' & ' + (togo - v);
 }
 
 function kpDigit(n) {
@@ -811,8 +874,12 @@ function kpShortcutTouchdown(){
 }
 
 function kpShortcutPenalty(kind){
+  // Type the yardage first: O Pen is always a loss, D Pen always a gain,
+  // whichever way it was typed. Nothing typed still logs 0.
+  var typed = (kpValue === '') ? 0 : Math.abs(parseInt(kpValue, 10)) || 0;
+  var signed = (kind === 'O') ? -typed : typed;
   closeKeypad(false);
-  document.getElementById('yds').value = '0';
+  document.getElementById('yds').value = String(signed);
   kpDisplay('yds');
   kpSetResult(kind === 'O' ? 'O Penalty' : 'D Penalty');
   setExec('');
@@ -897,6 +964,61 @@ function autoHoleType(){
 }
 // Values autoComp is allowed to overwrite (i.e. ones it set itself, or blank).
 // Anything else is treated as a deliberate manual choice and left alone.
+// ===== DOWN & DISTANCE =====
+// Distance is never entered. It is rebuilt by walking the logged plays, so
+// deleting or editing a play corrects it automatically.
+var togoOverride = null;
+
+function driveState(){
+  var ps = plays();
+  var down = 1, togo = 10;
+  for (var i=0;i<ps.length;i++){
+    var p = ps[i];
+    // Trust the down that was on screen when the play was logged. A 1st means
+    // a fresh series, however it got there (manual override included).
+    var di = DOWNS.indexOf(p.down);
+    if (p.down === '1st') { down = 1; togo = 10; }
+    else if (di >= 0) { down = di + 1; }
+
+    if (PC.indexOf(p.result) >= 0) { down = 1; togo = 10; continue; }
+    if (p.result === '1st down') { down = 1; togo = 10; continue; }
+
+    togo -= (p.yards || 0);
+    if (togo <= 0) { down = 1; togo = 10; continue; }
+    if (p.result === 'O Penalty' || p.result === 'D Penalty') continue;  // no down consumed
+    down++;
+    if (down > 4) { down = 1; togo = 10; }   // drive is over either way
+  }
+  return { down: DOWNS[down-1], togo: togo };
+}
+
+// What the form should show for the next play
+function currentToGo(){
+  if (togoOverride !== null) return togoOverride;
+  return driveState().togo;
+}
+
+function syncDown(){
+  togoOverride = null;
+  var st = driveState();
+  var el = document.getElementById('dn');
+  if (el) el.value = st.down;
+  if (typeof pkDisplay === 'function') pkDisplay('dn');
+  updateToGo();
+}
+
+function updateToGo(){
+  var el = document.getElementById('stg');
+  if (el) el.textContent = currentToGo();
+}
+
+// Setting the down by hand to 1st asserts a new series
+function onDownChange(){
+  var v = document.getElementById('dn').value;
+  togoOverride = (v === '1st') ? 10 : null;
+  updateToGo();
+}
+
 var AUTO_RESULTS = ['','Gain','Loss','Completion'];
 
 function setExec(v){
@@ -970,6 +1092,7 @@ function updateStats(){
   document.getElementById('sav').textContent=n?(tot/n).toFixed(1):'\u2014';
   var d=calcDrive(ps);
   document.getElementById('sdr').textContent=d.dp>0?d.dp+' pl / '+d.dy+' yds':'\u2014';
+  updateToGo();
 }
 function updateBanner(){
   var el=document.getElementById('gname');
@@ -1070,6 +1193,10 @@ function editPlay(id){
   if(!p) return;
 
   editId=id;
+
+  // Down
+  var dnSel=document.getElementById('dn');
+  if(dnSel && DOWNS.indexOf(p.down)>=0){ dnSel.value=p.down; }
 
   // Parse call: form, mot, hole, play
   var parts=p.call.split(' ');
@@ -1218,6 +1345,7 @@ function logPlay(){
   var call=[document.getElementById('form').value,document.getElementById('mot').value,document.getElementById('hole').value,document.getElementById('play').value].filter(Boolean).join(' ');
   var p={
     id:Date.now(),num:ps.length+1,quarter:Q,
+    down:document.getElementById('dn').value||'1st',
     call:call,
     playtype:document.getElementById('ptype').value||'\u2014',
     yards:yards,result:res,qb:qbv,
@@ -1243,7 +1371,8 @@ function logPlay(){
   }
   if(qbv){lastQB=qbv;document.getElementById('qb').value=qbv;}
   logSort=null;   // logging a play returns the log to chronological order
-  save();updateStats();renderLog();
+  save();updateStats();renderLog();syncDown();
+  if(document.getElementById('pane-stats').classList.contains('active')) stRender();
   ['yds','plyr'].forEach(function(i){document.getElementById(i).value='';});
   ['res','exec','form','mot','hole','play','ptype'].forEach(function(i){document.getElementById(i).selectedIndex=0;});
   lastResultValue = '';
@@ -1254,10 +1383,11 @@ function delPlay(id){if(!confirm('Delete this play?'))return;
   if(!gid)return;
   games[gid].plays=games[gid].plays.filter(function(p){return p.id!==id;});
   games[gid].plays.forEach(function(p,i){p.num=i+1;});
-  save();updateStats();renderLog();
+  save();updateStats();renderLog();syncDown();
+  if(document.getElementById('pane-stats').classList.contains('active')) stRender();
 }
 
-// Play log sorting. null = normal (newest first). Otherwise 'down' | 'hash' | 'call'.
+// Play log sorting. null = normal (newest first). Otherwise 'down' | 'call' | 'result' | 'player'.
 var logSort = null;
 
 function sortLog(col){
@@ -1268,7 +1398,10 @@ function sortLog(col){
 function applyLogSort(list){
   if(!logSort) return [].concat(list).reverse();   // default: newest first
   var arr=[].concat(list);                          // stable sort keeps chronology within ties
-  if(logSort==='call'){
+  if(logSort==='down'){
+    var DO={'1st':1,'2nd':2,'3rd':3,'4th':4};
+    arr.sort(function(a,b){ return (DO[a.down]||9)-(DO[b.down]||9); });
+  } else if(logSort==='call'){
     arr.sort(function(a,b){ return String(a.call||'').localeCompare(String(b.call||'')); });
   } else if(logSort==='player'){
     arr.sort(function(a,b){ return String(a.player||'').localeCompare(String(b.player||'')); });
@@ -1294,6 +1427,7 @@ function renderLog(){
     var tc=TC[p.playtype]||'';
     return '<tr class="clickable" onclick="editPlay('+p.id+')">'+
       '<td style="width:30px">'+(p.quarter==='OT'?'OT':'Q'+p.quarter)+'</td>'+
+      '<td style="width:30px">'+(p.down||'\u2014')+'</td>'+
       '<td>'+p.call+'</td>'+
       '<td style="width:46px"><span class="pill '+tc+'">'+p.playtype+'</span></td>'+
       '<td class="'+yc+'" style="width:38px">'+ys+'</td>'+
@@ -1304,7 +1438,7 @@ function renderLog(){
       '</tr>';
   }).join('');
   el.innerHTML='<table class="lt"><thead><tr>'+
-    '<th>Qtr</th>'+sortHdr('call','Call')+'<th>Type</th><th>Yds</th>'+
+    '<th>Qtr</th>'+sortHdr('down','Dn')+sortHdr('call','Call')+'<th>Type</th><th>Yds</th>'+
     sortHdr('result','Result')+sortHdr('player','Carrier')+'<th>QB</th><th></th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table>';
 }
@@ -1362,48 +1496,66 @@ function expBackup(){
   if(downloadFile(fn, json, 'application/json')) toast('Backup exported');
 }
 function impBackup(ev){
-  var file=ev.target.files[0];if(!file)return;
+  var file=ev.target.files[0];
+  if(!file){ ev.target.value=''; return; }
   var r=new FileReader();
-  r.onload=function(e){
-    try{
-      var d=JSON.parse(e.target.result);
-      if(!d.games){alert('Invalid backup file.');return;}
-      var c=Object.keys(d.games).length;
-      var hasSetup = d.setup && typeof d.setup === 'object';
-      if(!confirm('Load '+c+' game(s)'+(hasSetup?' plus setup data':'')+' from backup?'))return;
-      Object.keys(d.games).forEach(function(id){games[id]=d.games[id];});
-      save();
-      if(hasSetup){ restoreSetupData(d.setup); }
-    }catch(e){alert('Could not read backup file: '+e.message);return;}
-    try{updateBanner();loadScore();updateStats();renderLog();drawGames();}catch(e2){}
-    try{if(gmCurTab==='setup')gmRenderSetup();}catch(e4){}
-    toast('Restored — '+c+' game(s) loaded');
-  };
-  r.readAsText(file);ev.target.value='';
+  r.onerror=function(){ ev.target.value=''; alert('Could not read that file. Copy the backup text and use Paste backup instead.'); };
+  r.onload=function(e){ ev.target.value=''; restoreBackupText(String(e.target.result||'')); };
+  try{ r.readAsText(file); }catch(err){ r.onerror(); }
+}
+
+// Shared by the file picker and the paste button
+function restoreBackupText(txt){
+  var c=0;
+  try{
+    var d=JSON.parse(txt);
+    if(!d.games){alert('That is not a backup file \u2014 no games found in it.');return;}
+    c=Object.keys(d.games).length;
+    var hasSetup = d.setup && typeof d.setup === 'object';
+    if(!confirm('Load '+c+' game(s)'+(hasSetup?' plus setup data':'')+' from backup?'))return;
+    Object.keys(d.games).forEach(function(id){games[id]=d.games[id];});
+    save();
+    if(hasSetup){ restoreSetupData(d.setup); }
+  }catch(e){alert('Could not read that backup: '+e.message);return;}
+  try{updateBanner();loadScore();updateStats();renderLog();drawGames();syncDown();}catch(e2){}
+  try{if(gmCurTab==='setup')gmRenderSetup();}catch(e4){}
+  toast('Restored \u2014 '+c+' game(s) loaded');
 }
 
 function handleCSVFileImport(ev, textareaId, saveFnName){
-  var file=ev.target.files[0];if(!file)return;
+  var file=ev.target.files[0];
+  if(!file){ ev.target.value=''; return; }
   var r=new FileReader();
+  r.onerror=function(){
+    ev.target.value='';
+    alert('Could not read that file. If it came from Google Drive or iCloud, open it once in the Files app so it downloads to the iPad, then try again \u2014 or paste the text straight into the box above.');
+  };
   r.onload=function(e){
+    ev.target.value='';
     var ta=document.getElementById(textareaId);
-    if(!ta){ev.target.value='';return;}
-    ta.value=e.target.result;
+    if(!ta) return;
+    var txt=String(e.target.result||'');
+    txt=txt.replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n');
+    if(!txt.trim()){
+      alert('That file came through empty. If it is a Google Sheet, export it as CSV first (Share & export \u2192 Save as \u2192 .csv), or paste the rows into the box above.');
+      return;
+    }
+    ta.value=txt;
     if(typeof window[saveFnName]==='function') window[saveFnName]();
   };
-  r.readAsText(file);ev.target.value='';
+  try { r.readAsText(file); } catch(err){ r.onerror(); }
 }
 
 function expGame(id){
   var g=games[id];if(!g||!g.plays.length)return;
-  var hdr=['#','Quarter','Call','Play Type','QB','Player','Yards','Result','Notes'];
-  var rows=g.plays.map(function(p){return[p.num,p.quarter,p.call,p.playtype,p.qb||'',p.player,p.yards,p.result,p.notes||''];});
+  var hdr=['#','Quarter','Down','Call','Play Type','QB','Player','Yards','Result','Notes'];
+  var rows=g.plays.map(function(p){return[p.num,p.quarter,p.down||'',p.call,p.playtype,p.qb||'',p.player,p.yards,p.result,p.notes||''];});
   var trows=[hdr].concat(rows).map(function(r){return'<tr>'+r.map(function(v){return'<td>'+String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</td>';}).join('')+'</tr>';}).join('');
   var xls='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Plays</x:Name><x:WorksheetOptions><x:PageSetup><x:Layout x:Orientation="Landscape"/></x:PageSetup></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>'+trows+'</table></body></html>';
   downloadFile('HB_'+g.opponent.replace(/\s+/g,'_')+'_'+(g.date||'game')+'.xls', xls, 'application/vnd.ms-excel');
 }
 
-load();updateBanner();loadScore();updateStats();renderLog();applyPlaybookRestore();refreshAllPickers();
+load();updateBanner();loadScore();updateStats();renderLog();applyPlaybookRestore();refreshAllPickers();syncDown();
 document.getElementById('ndate').value=new Date().toISOString().split('T')[0];
 
 var gmCurTab = 'games';
@@ -1586,28 +1738,28 @@ function gmRenderSetup() {
     '<div class="brow" style="margin-top:10px">' +
     '<button class="bp" onclick="formsImportFromTextarea()">Save</button>' +
     '<button class="bs" onclick="document.getElementById(&#39;forms-file&#39;).click()">&#8593; Import</button>' +
-    '<input type="file" id="forms-file" accept=".csv,.txt" style="display:none" onchange="handleCSVFileImport(event,&#39;forms-csv&#39;,&#39;formsImportFromTextarea&#39;)">' +
+    '<input type="file" id="forms-file" style="display:none" onchange="handleCSVFileImport(event,&#39;forms-csv&#39;,&#39;formsImportFromTextarea&#39;)">' +
     '</div></div>' +
     '<div><div class="fl" style="margin-bottom:6px">Motions</div>' +
     '<textarea id="mots-csv" rows="10" style="width:100%;font-family:monospace;font-size:12px;padding:8px;border:1px solid #d2d2d7;border-radius:8px">'+motsTxt+'</textarea>' +
     '<div class="brow" style="margin-top:10px">' +
     '<button class="bp" onclick="motsImportFromTextarea()">Save</button>' +
     '<button class="bs" onclick="document.getElementById(&#39;mots-file&#39;).click()">&#8593; Import</button>' +
-    '<input type="file" id="mots-file" accept=".csv,.txt" style="display:none" onchange="handleCSVFileImport(event,&#39;mots-csv&#39;,&#39;motsImportFromTextarea&#39;)">' +
+    '<input type="file" id="mots-file" style="display:none" onchange="handleCSVFileImport(event,&#39;mots-csv&#39;,&#39;motsImportFromTextarea&#39;)">' +
     '</div></div>' +
     '<div><div class="fl" style="margin-bottom:6px">Protection/Hole</div>' +
     '<textarea id="holes-csv" rows="10" style="width:100%;font-family:monospace;font-size:12px;padding:8px;border:1px solid #d2d2d7;border-radius:8px">'+holesTxt+'</textarea>' +
     '<div class="brow" style="margin-top:10px">' +
     '<button class="bp" onclick="holesImportFromTextarea()">Save</button>' +
     '<button class="bs" onclick="document.getElementById(&#39;holes-file&#39;).click()">&#8593; Import</button>' +
-    '<input type="file" id="holes-file" accept=".csv,.txt" style="display:none" onchange="handleCSVFileImport(event,&#39;holes-csv&#39;,&#39;holesImportFromTextarea&#39;)">' +
+    '<input type="file" id="holes-file" style="display:none" onchange="handleCSVFileImport(event,&#39;holes-csv&#39;,&#39;holesImportFromTextarea&#39;)">' +
     '</div></div>' +
     '<div><div class="fl" style="margin-bottom:6px">Plays</div>' +
     '<textarea id="plays-csv" rows="10" style="width:100%;font-family:monospace;font-size:12px;padding:8px;border:1px solid #d2d2d7;border-radius:8px">'+playsTxt+'</textarea>' +
     '<div class="brow" style="margin-top:10px">' +
     '<button class="bp" onclick="playsImportFromTextarea()">Save</button>' +
     '<button class="bs" onclick="document.getElementById(&#39;plays-file&#39;).click()">&#8593; Import</button>' +
-    '<input type="file" id="plays-file" accept=".csv,.txt" style="display:none" onchange="handleCSVFileImport(event,&#39;plays-csv&#39;,&#39;playsImportFromTextarea&#39;)">' +
+    '<input type="file" id="plays-file" style="display:none" onchange="handleCSVFileImport(event,&#39;plays-csv&#39;,&#39;playsImportFromTextarea&#39;)">' +
     '</div></div>' +
     '</div></div></div>' +
 
@@ -1617,7 +1769,7 @@ function gmRenderSetup() {
     '<div class="brow" style="margin-top:10px">' +
     '<button class="bp" onclick="rosterImportFromTextarea()">Save</button>' +
     '<button class="bs" onclick="document.getElementById(&#39;roster-file&#39;).click()">&#8593; Import</button>' +
-    '<input type="file" id="roster-file" accept=".csv,.txt" style="display:none" onchange="handleCSVFileImport(event,&#39;roster-csv&#39;,&#39;rosterImportFromTextarea&#39;)">' +
+    '<input type="file" id="roster-file" style="display:none" onchange="handleCSVFileImport(event,&#39;roster-csv&#39;,&#39;rosterImportFromTextarea&#39;)">' +
     '</div></div></div>' +
 
     '<div class="card"><div class="ct">Opponents</div><div style="padding:12px 14px">' +
@@ -1626,7 +1778,7 @@ function gmRenderSetup() {
     '<div class="brow" style="margin-top:10px">' +
     '<button class="bp" onclick="opponentsImportFromTextarea()">Save</button>' +
     '<button class="bs" onclick="document.getElementById(&#39;opponents-file&#39;).click()">&#8593; Import</button>' +
-    '<input type="file" id="opponents-file" accept=".csv,.txt" style="display:none" onchange="handleCSVFileImport(event,&#39;opponents-csv&#39;,&#39;opponentsImportFromTextarea&#39;)">' +
+    '<input type="file" id="opponents-file" style="display:none" onchange="handleCSVFileImport(event,&#39;opponents-csv&#39;,&#39;opponentsImportFromTextarea&#39;)">' +
     '</div></div></div>';
 }
 
@@ -1645,12 +1797,236 @@ function bsPlayerName(raw) {
   return raw;
 }
 
-function buildBoxScoreText(g) {
-  var plays = g.plays || [];
-  var L = [];
+// ===== STAT ENGINE =====
+// One walk of the plays feeds both the Stats tab and the box score email, so
+// the two can never disagree.
 
+// Replays the drive logic and marks which plays moved the chains.
+function walkDrives(ps){
+  var down=1, togo=10, rows=[];
+  for (var i=0;i<ps.length;i++){
+    var p=ps[i], di=DOWNS.indexOf(p.down);
+    if (p.down==='1st'){ down=1; togo=10; }
+    else if (di>=0){ down=di+1; }
+    var startDown=down, startTogo=togo, conv=false, pen=(p.result==='O Penalty'||p.result==='D Penalty');
+
+    if (p.result==='Touchdown'){ conv=true; down=1; togo=10; }
+    else if (p.result==='1st down'){ conv=true; down=1; togo=10; }
+    else if (PC.indexOf(p.result)>=0){ down=1; togo=10; }
+    else {
+      togo -= (p.yards||0);
+      if (togo<=0){ conv=true; down=1; togo=10; }
+      else if (!pen){ down++; if (down>4){ down=1; togo=10; } }
+    }
+    rows.push({p:p, down:startDown, togo:startTogo, converted:conv, penalty:pen});
+  }
+  return { rows:rows, next:{ down:DOWNS[down-1], togo:togo } };
+}
+
+function emptyTeam(){
+  return {totYds:0,rushYds:0,passYds:0,plays:0,turnovers:0,
+          fd:0,fdRush:0,fdPass:0,fdPen:0,
+          d3a:0,d3c:0,d4a:0,d4c:0,ptsFor:0,ptsAgn:0,w:0,l:0,t:0,games:0};
+}
+function emptyQB(){ return {att:0,comp:0,passYds:0,passTDs:0,pass1D:0,ints:0,rushAtt:0,rushYds:0,rushTDs:0,rush1D:0,sacks:0,sackYds:0}; }
+function emptyPl(){ return {rushAtt:0,rushYds:0,rushTDs:0,rush1D:0,tgts:0,rec:0,recYds:0,recTDs:0,rec1D:0}; }
+
+function computeStats(ps){
+  var w = walkDrives(ps), t = emptyTeam(), qbs = {}, pls = {};
+  t.plays = ps.length;
+  w.rows.forEach(function(r){
+    var p=r.p, y=(p.yards||0), isRun=(p.playtype==='Run'||p.playtype==='Toss'), isPass=(p.playtype==='Pass');
+    t.totYds += y;
+    if (p.playtype==='Run') t.rushYds += y;
+    if (isPass || p.playtype==='Toss') t.passYds += y;
+    if (p.result==='Fumble'||p.result==='Fumble (after catch)'||p.result==='Interception') t.turnovers++;
+
+    if (r.down===3 && !r.penalty){ t.d3a++; if (r.converted) t.d3c++; }
+    if (r.down===4 && !r.penalty){ t.d4a++; if (r.converted) t.d4c++; }
+    if (r.converted){
+      t.fd++;
+      if (r.penalty) t.fdPen++;
+      else if (isRun) t.fdRush++;
+      else if (isPass) t.fdPass++;
+    }
+
+    var qb=p.qb;
+    if (qb && qb!=='\u2014' && qb!=='-'){
+      if (!qbs[qb]) qbs[qb]=emptyQB();
+      var q=qbs[qb];
+      if (isPass){
+        if (p.result==='Sack'){ q.sacks++; q.sackYds+=Math.abs(y); }
+        else if (!r.penalty){
+          q.att++;
+          if (p.result==='Interception') q.ints++;
+          else if (p.result!=='Incomplete'){
+            q.comp++; q.passYds+=y;
+            if (p.result==='Touchdown') q.passTDs++;
+            if (r.converted) q.pass1D++;
+          }
+        }
+      }
+      if (p.playtype==='Run' && p.player===qb){
+        q.rushAtt++; q.rushYds+=y;
+        if (p.result==='Touchdown') q.rushTDs++;
+        if (r.converted) q.rush1D++;
+      }
+    }
+
+    var who=p.player;
+    if (who && who!=='\u2014' && who!=='-'){
+      var isQBRush = (p.playtype==='Run') && p.qb && p.player===p.qb;
+      if (!pls[who]) pls[who]=emptyPl();
+      var s=pls[who];
+      if (isRun && !isQBRush){
+        s.rushAtt++; s.rushYds+=y;
+        if (p.result==='Touchdown') s.rushTDs++;
+        if (r.converted) s.rush1D++;
+      }
+      // A sack has no intended receiver, so it is not a target.
+      if (isPass && p.result!=='Sack'){
+        s.tgts++;
+        var noCatch=(p.result==='Incomplete'||p.result==='Interception');
+        if (!noCatch){
+          s.rec++; s.recYds+=y;
+          if (p.result==='Touchdown') s.recTDs++;
+          if (r.converted) s.rec1D++;
+        }
+      }
+    }
+  });
+  return {team:t, qbs:qbs, pls:pls};
+}
+
+function addInto(dst, src){ Object.keys(src).forEach(function(k){ dst[k]=(dst[k]||0)+src[k]; }); }
+
+function computeSeasonStats(){
+  var tot={team:emptyTeam(), qbs:{}, pls:{}};
+  Object.keys(games).forEach(function(id){
+    var g=games[id];
+    if (!g.plays || !g.plays.length) return;
+    var st=computeStats(g.plays);
+    addInto(tot.team, st.team);
+    tot.team.games++;
+    var us=g.scoreUs||0, them=g.scoreThem||0;
+    tot.team.ptsFor+=us; tot.team.ptsAgn+=them;
+    if (us>them) tot.team.w++; else if (us<them) tot.team.l++; else tot.team.t++;
+    Object.keys(st.qbs).forEach(function(k){ if(!tot.qbs[k])tot.qbs[k]=emptyQB(); addInto(tot.qbs[k], st.qbs[k]); });
+    Object.keys(st.pls).forEach(function(k){ if(!tot.pls[k])tot.pls[k]=emptyPl(); addInto(tot.pls[k], st.pls[k]); });
+  });
+  return tot;
+}
+
+function pct(c,a){ return a ? Math.round(c/a*100)+'%' : '\u2014'; }
+function posOf(key){
+  var r=ROSTER.find(function(p){ return (p.num+' '+p.name)===key || p.name===key; });
+  return r ? (r.pos||'') : '';
+}
+// RB and WR stay separate sections, split by the roster position.
+function splitPlayers(pls){
+  var rb=[], wr=[];
+  Object.keys(pls).forEach(function(k){
+    var s=pls[k];
+    if (!s.rushAtt && !s.tgts) return;
+    var row={key:k, s:s, ap:s.rushYds+s.recYds};
+    var pos=posOf(k).toUpperCase();
+    if (pos==='WR'||pos==='TE') wr.push(row); else rb.push(row);
+  });
+  rb.sort(function(a,b){return b.ap-a.ap;});
+  wr.sort(function(a,b){return b.ap-a.ap;});
+  return {rb:rb, wr:wr};
+}
+
+// ===== STATS TAB =====
+var stCurTab = 'game';
+
+function stTab(id, el){
+  document.querySelectorAll('.st-stab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.st-pane').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('st-pane-'+id).classList.add('active');
+  if (el) el.classList.add('active');
+  stCurTab = id;
+  stRender();
+}
+
+function stCard(label, value, sub){
+  return '<div class="stc"><div class="stl">'+label+'</div><div class="stv">'+value+'</div>'+
+         (sub ? '<div class="stsub">'+sub+'</div>' : '')+'</div>';
+}
+
+function stTeamCards(t, season){
+  var h = '<div class="stg">' +
+    stCard('Total yds', t.totYds) +
+    stCard('Rush', t.rushYds) +
+    stCard('Pass', t.passYds) +
+    stCard('Plays', t.plays) +
+    stCard('1st downs', t.fd, t.fdRush+' ru / '+t.fdPass+' pa'+(t.fdPen?' / '+t.fdPen+' pen':'')) +
+    stCard('3rd down', t.d3c+'/'+t.d3a, pct(t.d3c,t.d3a)) +
+    stCard('4th down', t.d4c+'/'+t.d4a, pct(t.d4c,t.d4a)) +
+    stCard('Turnovers', t.turnovers);
+  if (season) h += stCard('Record', t.w+'-'+t.l+(t.t?'-'+t.t:''), t.games+' game'+(t.games===1?'':'s')) +
+                   stCard('Points', t.ptsFor+' \u2013 '+t.ptsAgn, 'for \u2013 against');
+  return h + '</div>';
+}
+
+function stQBTable(qbs){
+  var keys = Object.keys(qbs).filter(function(k){ var q=qbs[k]; return q.att||q.rushAtt||q.sacks; });
+  if (!keys.length) return '';
+  var rows = keys.map(function(k){
+    var q=qbs[k];
+    return '<tr><td>'+bsPlayerName(k)+'</td><td>'+q.att+'</td><td>'+q.comp+'</td><td>'+pct(q.comp,q.att)+'</td>'+
+           '<td>'+q.passYds+'</td><td>'+q.passTDs+'</td><td>'+q.ints+'</td><td>'+q.pass1D+'</td>'+
+           '<td>'+q.rushAtt+'</td><td>'+q.rushYds+'</td><td>'+q.rushTDs+'</td><td>'+q.sacks+'</td></tr>';
+  }).join('');
+  return '<div class="sth">Passing</div><div class="card" style="padding:10px 12px"><table class="lt">'+
+    '<thead><tr><th>Player</th><th>Att</th><th>Comp</th><th>Pct</th><th>Yds</th><th>TD</th><th>INT</th><th>1st</th><th>Ru att</th><th>Ru yds</th><th>Ru TD</th><th>Sk</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table></div>';
+}
+
+function stPlayerTable(title, list){
+  if (!list.length) return '';
+  var rows = list.map(function(r){
+    var s=r.s;
+    return '<tr><td>'+bsPlayerName(r.key)+'</td>'+
+      '<td>'+s.rushAtt+'</td><td>'+s.rushYds+'</td><td>'+s.rushTDs+'</td><td>'+s.rush1D+'</td>'+
+      '<td>'+s.tgts+'</td><td>'+s.rec+'</td><td>'+s.recYds+'</td><td>'+s.recTDs+'</td><td>'+s.rec1D+'</td>'+
+      '<td style="font-weight:600">'+r.ap+'</td></tr>';
+  }).join('');
+  return '<div class="sth">'+title+'</div><div class="card" style="padding:10px 12px"><table class="lt">'+
+    '<thead><tr><th>Player</th><th>Ru att</th><th>Ru yds</th><th>Ru TD</th><th>Ru 1st</th><th>Tgt</th><th>Rec</th><th>Rec yds</th><th>Rec TD</th><th>Rec 1st</th><th>All-pur</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table></div>';
+}
+
+function stRender(){
+  if (stCurTab === 'season') {
+    var el = document.getElementById('st-pane-season');
+    if (!el) return;
+    var any = Object.keys(games).some(function(id){ return games[id].plays && games[id].plays.length; });
+    if (!any) { el.innerHTML = '<div class="es">No games logged yet.</div>'; return; }
+    var sn = computeSeasonStats(), sp = splitPlayers(sn.pls);
+    el.innerHTML = stTeamCards(sn.team, true) + stQBTable(sn.qbs) +
+                   stPlayerTable('RB', sp.rb) + stPlayerTable('WR', sp.wr);
+    return;
+  }
+  var g = document.getElementById('st-pane-game');
+  if (!g) return;
+  if (!gid || !games[gid]) { g.innerHTML = '<div class="es">No game selected.</div>'; return; }
+  var game = games[gid];
+  if (!game.plays || !game.plays.length) { g.innerHTML = '<div class="es">No plays logged yet.</div>'; return; }
+  var st = computeStats(game.plays), pl = splitPlayers(st.pls);
+  var dt = game.date ? new Date(game.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+  var head = '<div style="font-size:12px;color:#6e6e73;margin-bottom:10px">' +
+    (game.homeAway==='away'?'@ ':'vs. ') + game.opponent + (dt?' \u2014 '+dt:'') +
+    ' \u00b7 HB ' + (game.scoreUs||0) + ', ' + game.opponent + ' ' + (game.scoreThem||0) + '</div>';
+  g.innerHTML = head + stTeamCards(st.team, false) + stQQ(st) ;
+  function stQQ(x){ return stQBTable(x.qbs) + stPlayerTable('RB', pl.rb) + stPlayerTable('WR', pl.wr); }
+}
+
+function buildBoxScoreText(g) {
+  var ps = g.plays || [];
+  var st = computeStats(ps), t = st.team, sp = splitPlayers(st.pls);
+  var L = [];
   var dateStr = g.date ? new Date(g.date+'T00:00:00').toLocaleDateString('en-US') : '';
-  var vs = (g.homeAway==='away' ? '@ ' : 'vs. ');
 
   L.push('HOLLIS-BROOKLINE FOOTBALL \u2014 GAME SUMMARY');
   L.push('');
@@ -1658,114 +2034,58 @@ function buildBoxScoreText(g) {
   if (dateStr) L.push(dateStr);
   L.push('');
 
-  // Team stats
-  var totYds = plays.reduce(function(s,p){ return s + (p.yards||0); }, 0);
-  var rushYds = plays.filter(function(p){return p.playtype==='Run';}).reduce(function(s,p){return s+(p.yards||0);},0);
-  var passYds = plays.filter(function(p){return p.playtype==='Pass'||p.playtype==='Toss';}).reduce(function(s,p){return s+(p.yards||0);},0);
-  var turnovers = plays.filter(function(p){return p.result==='Fumble'||p.result==='Fumble (after catch)'||p.result==='Interception';}).length;
-
   L.push('TEAM STATS');
-  L.push('Total Yards: ' + totYds);
-  L.push('Rushing Yards: ' + rushYds);
-  L.push('Passing Yards: ' + passYds);
-  L.push('Total Plays: ' + plays.length);
-  L.push('Turnovers: ' + turnovers);
+  L.push('Total Yards: ' + t.totYds);
+  L.push('Rushing Yards: ' + t.rushYds);
+  L.push('Passing Yards: ' + t.passYds);
+  L.push('Total Plays: ' + t.plays);
+  L.push('1st Downs: ' + t.fd + ' (' + t.fdRush + ' rush, ' + t.fdPass + ' pass' + (t.fdPen ? ', ' + t.fdPen + ' penalty' : '') + ')');
+  L.push('3rd Down Conversions: ' + t.d3c + '/' + t.d3a + ' (' + pct(t.d3c,t.d3a) + ')');
+  L.push('4th Down Conversions: ' + t.d4c + '/' + t.d4a + ' (' + pct(t.d4c,t.d4a) + ')');
+  L.push('Turnovers: ' + t.turnovers);
   L.push('');
 
-  // QB
-  var qbStats = {};
-  plays.forEach(function(p){
-    var qb = p.qb;
-    if (!qb || qb==='\u2014' || qb==='-') return;
-    if (!qbStats[qb]) qbStats[qb] = {att:0,comp:0,passYds:0,passTDs:0,pass1D:0,ints:0,rushAtt:0,rushYds:0,rushTDs:0,rush1D:0,sacks:0,sackYds:0};
-    var s = qbStats[qb];
-    if (p.playtype==='Pass') {
-      if (p.result==='Sack') {
-        // A sack is not a pass attempt.
-        s.sacks++; s.sackYds+=Math.abs(p.yards);
-      } else if (p.result!=='O Penalty' && p.result!=='D Penalty') {
-        s.att++;
-        if (p.result==='Interception') { s.ints++; }
-        else if (p.result!=='Incomplete') {
-          s.comp++; s.passYds+=p.yards;
-          if (p.result==='Touchdown') s.passTDs++;
-          if (p.result==='1st down') s.pass1D++;
-        }
-      }
-    }
-    if (p.playtype==='Run' && p.player===qb) {
-      s.rushAtt++; s.rushYds+=p.yards;
-      if (p.result==='Touchdown') s.rushTDs++;
-      if (p.result==='1st down') s.rush1D++;
-    }
-  });
   var qbLines = [];
-  Object.keys(qbStats).forEach(function(qb){
-    var s = qbStats[qb];
-    if (!s.att && !s.rushAtt && !s.sacks) return;
-    var pct = s.att ? Math.round(s.comp/s.att*100)+'%' : '\u2014';
-    var main = bsPlayerName(qb) + ': ' + s.att + ' att, ' + s.comp + ' comp (' + pct + '), ' + s.passYds + ' yds';
-    if (s.passTDs) main += ', ' + s.passTDs + ' pass TD';
-    if (s.ints) main += ', ' + s.ints + ' INT';
-    if (s.pass1D) main += ', ' + s.pass1D + ' pass 1st';
+  Object.keys(st.qbs).forEach(function(k){
+    var q = st.qbs[k];
+    if (!q.att && !q.rushAtt && !q.sacks) return;
+    var main = bsPlayerName(k) + ': ' + q.att + ' att, ' + q.comp + ' comp (' + pct(q.comp,q.att) + '), ' + q.passYds + ' yds';
+    if (q.passTDs) main += ', ' + q.passTDs + ' pass TD';
+    if (q.ints) main += ', ' + q.ints + ' INT';
+    if (q.pass1D) main += ', ' + q.pass1D + ' pass 1st';
     qbLines.push(main);
-    var rush = '  Rushing: ' + s.rushAtt + ' att, ' + s.rushYds + ' yds';
-    if (s.rushTDs) rush += ', ' + s.rushTDs + ' rush TD';
-    if (s.rush1D) rush += ', ' + s.rush1D + ' rush 1st';
+    var rush = '  Rushing: ' + q.rushAtt + ' att, ' + q.rushYds + ' yds';
+    if (q.rushTDs) rush += ', ' + q.rushTDs + ' rush TD';
+    if (q.rush1D) rush += ', ' + q.rush1D + ' rush 1st';
     qbLines.push(rush);
-    if (s.sacks) qbLines.push('  Sacked: ' + s.sacks + ' for ' + s.sackYds + ' yds');
+    if (q.sacks) qbLines.push('  Sacked: ' + q.sacks + ' for ' + q.sackYds + ' yds');
   });
   if (qbLines.length) { L.push('QB'); qbLines.forEach(function(l){L.push(l);}); L.push(''); }
 
-  // Player stats (RB / WR)
-  var pm = {};
-  plays.forEach(function(p){
-    var plyr = p.player;
-    if (!plyr || plyr==='\u2014' || plyr==='-') return;
-    if (!pm[plyr]) pm[plyr] = {rushAtt:0,rushYds:0,rushTDs:0,rush1D:0,tgts:0,rec:0,recYds:0,recTDs:0,rec1D:0};
-    var s = pm[plyr];
-    var isQBRush = (p.playtype==='Run') && p.qb && p.player===p.qb;
-    if ((p.playtype==='Run'||p.playtype==='Toss') && !isQBRush) {
-      s.rushAtt++; s.rushYds+=p.yards;
-      if (p.result==='Touchdown') s.rushTDs++;
-      if (p.result==='1st down') s.rush1D++;
-    }
-    if (p.playtype==='Pass') {
-      // Toss is a lateral — counted as a rush above, not a reception.
-      s.tgts++;
-      var noCatchE = (p.result==='Incomplete'||p.result==='Interception'||p.result==='Sack');
-      if (!noCatchE) {
-        s.rec++; s.recYds+=p.yards;
-        if (p.result==='Touchdown') s.recTDs++;
-        if (p.result==='1st down') s.rec1D++;
+  function playerLines(title, list){
+    if (!list.length) return;
+    L.push(title);
+    list.forEach(function(r){
+      var s2 = r.s, parts = [];
+      if (s2.rushAtt) {
+        var ru = s2.rushAtt + ' att, ' + s2.rushYds + ' rush yds';
+        if (s2.rushTDs) ru += ', ' + s2.rushTDs + ' TD';
+        if (s2.rush1D) ru += ', ' + s2.rush1D + ' 1st';
+        parts.push(ru);
       }
-    }
-  });
-
-  var rbLines = [], wrLines = [];
-  Object.keys(pm).forEach(function(k){
-    var s = pm[k];
-    var nm = bsPlayerName(k);
-    var r = ROSTER.find(function(p){ return (p.num+' '+p.name)===k || p.name===k; });
-    var pos = r ? r.pos : '';
-    if (s.rushAtt > 0) {
-      var line = nm + ': ' + s.rushAtt + ' att, ' + s.rushYds + ' yds';
-      if (s.rushTDs) line += ', ' + s.rushTDs + ' TD';
-      if (s.rush1D) line += ', ' + s.rush1D + ' 1st down';
-      rbLines.push({name:nm, yds:s.rushYds, text:line});
-    }
-    if (s.tgts > 0) {
-      var wline = nm + ': ' + s.tgts + ' tgt, ' + s.rec + ' rec, ' + s.recYds + ' yds';
-      if (s.recTDs) wline += ', ' + s.recTDs + ' TD';
-      if (s.rec1D) wline += ', ' + s.rec1D + ' 1st down';
-      wrLines.push({name:nm, yds:s.recYds, text:wline});
-    }
-  });
-  rbLines.sort(function(a,b){return b.yds-a.yds;});
-  wrLines.sort(function(a,b){return b.yds-a.yds;});
-
-  if (rbLines.length) { L.push('RB'); rbLines.forEach(function(l){L.push(l.text);}); L.push(''); }
-  if (wrLines.length) { L.push('WR'); wrLines.forEach(function(l){L.push(l.text);}); L.push(''); }
+      if (s2.tgts) {
+        var re = s2.tgts + ' tgt, ' + s2.rec + ' rec, ' + s2.recYds + ' rec yds';
+        if (s2.recTDs) re += ', ' + s2.recTDs + ' TD';
+        if (s2.rec1D) re += ', ' + s2.rec1D + ' 1st';
+        parts.push(re);
+      }
+      L.push(bsPlayerName(r.key) + ': ' + parts.join(' | '));
+      L.push('  All-purpose: ' + r.ap + ' yds');
+    });
+    L.push('');
+  }
+  playerLines('RB', sp.rb);
+  playerLines('WR', sp.wr);
 
   L.push('\u2014');
   L.push('Sent from HB Play Tracker Sideline');

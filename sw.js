@@ -1,7 +1,7 @@
 // HB Play Tracker Sideline - offline service worker
 // IMPORTANT: bump the version below every time you upload a new index.html,
 // otherwise devices keep serving the old cached copy.
-var CACHE = 'hb-sideline-v2';
+var CACHE = 'hb-sideline-v5';
 
 var ASSETS = [
   './',
