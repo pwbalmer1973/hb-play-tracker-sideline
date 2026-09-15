@@ -184,6 +184,20 @@ button{cursor:pointer;font-family:inherit}
 .stv{font-size:19px;font-weight:600}
 .stsub{font-size:10px;color:#6e6e73}
 .sth{font-size:12px;font-weight:600;margin:14px 0 6px}
+.rpbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px}
+.rpleg{display:flex;gap:14px;font-size:11px;color:#6e6e73;flex-wrap:wrap}
+.rpdot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.stt{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
+.stt thead tr{background:#1a3a8c;color:#fff}
+.stt th{font-weight:500;padding:4px 2px;text-align:center}
+.stt th.grp{font-weight:600;padding:5px 3px;font-size:10px;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.25)}
+.stt th.pl{text-align:left;font-weight:600;padding:6px 6px;width:22%}
+.stt th.sep,.stt td.sep{border-left:1px solid rgba(255,255,255,.25)}
+.stt th.tot{font-weight:600;padding:6px 3px;line-height:1.15}
+.stt td{padding:7px 2px;text-align:center;border-top:1px solid #f0f0f5}
+.stt td.nm{text-align:left;padding:7px 6px}
+.stt tbody tr:first-child td{border-top:none}
+.stcard{background:#fff;border-radius:12px;overflow:hidden;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -1985,13 +1999,28 @@ function stCard(label, value, sub){
          (sub ? '<div class="stsub">'+sub+'</div>' : '')+'</div>';
 }
 
+function stRpBar(t){
+  var tot = t.runCalls + t.passCalls;
+  if (!tot) return '';
+  var runPct = Math.round(t.runCalls/tot*100), passPct = 100 - runPct;
+  var runAvg = t.runCalls ? (t.rushYds/t.runCalls).toFixed(1) : '0.0';
+  var passAvg = t.passCalls ? (t.passYds/t.passCalls).toFixed(1) : '0.0';
+  return '<div class="sth" style="margin-top:0">Run / pass split</div>' +
+    '<div class="card" style="padding:12px 14px;margin-bottom:12px">' +
+    '<div class="rpbar"><div style="width:'+runPct+'%;background:#1a7a3c"></div>' +
+    '<div style="width:'+passPct+'%;background:#1a3a8c"></div></div>' +
+    '<div class="rpleg">' +
+    '<span><span class="rpdot" style="background:#1a7a3c"></span>Run '+runPct+'% ('+t.runCalls+' plays, '+runAvg+' avg)</span>' +
+    '<span><span class="rpdot" style="background:#1a3a8c"></span>Pass '+passPct+'% ('+t.passCalls+' plays, '+passAvg+' avg)</span>' +
+    '</div></div>';
+}
+
 function stTeamCards(t, season){
   var h = '<div class="stg">' +
     stCard('Total yds', t.totYds) +
     stCard('Rush', t.rushYds) +
     stCard('Pass', t.passYds) +
     stCard('Plays', t.plays) +
-    stCard('Run / Pass', t.runCalls+' / '+t.passCalls, pct(t.runCalls, t.runCalls+t.passCalls)+' run') +
     stCard('1st downs', t.fd, t.fdRush+' ru / '+t.fdPass+' pa'+(t.fdPen?' / '+t.fdPen+' pen':'')) +
     stCard('3rd down', t.d3c+'/'+t.d3a, pct(t.d3c,t.d3a)) +
     stCard('4th down', t.d4c+'/'+t.d4a, pct(t.d4c,t.d4a)) +
@@ -2006,27 +2035,41 @@ function stQBTable(qbs){
   if (!keys.length) return '';
   var rows = keys.map(function(k){
     var q=qbs[k];
-    return '<tr><td>'+bsPlayerName(k)+'</td><td>'+q.att+'</td><td>'+q.comp+'</td><td>'+pct(q.comp,q.att)+'</td>'+
-           '<td>'+q.passYds+'</td><td>'+q.passTDs+'</td><td>'+q.ints+'</td><td>'+q.pass1D+'</td>'+
-           '<td>'+q.rushAtt+'</td><td>'+q.rushYds+'</td><td>'+q.rushTDs+'</td><td>'+q.sacks+'</td></tr>';
+    return '<tr><td class="nm">'+bsPlayerName(k)+'</td>'+
+      '<td>'+q.att+'</td><td>'+q.comp+'</td><td>'+pct(q.comp,q.att)+'</td><td>'+q.passYds+'</td>'+
+      '<td>'+q.passTDs+'</td><td>'+q.ints+'</td><td>'+q.pass1D+'</td>'+
+      '<td class="sep">'+q.rushAtt+'</td><td>'+q.rushYds+'</td><td>'+q.rushTDs+'</td><td>'+q.rush1D+'</td>'+
+      '<td class="sep">'+q.sacks+'</td></tr>';
   }).join('');
-  return '<div class="sth">Passing</div><div class="card" style="padding:10px 12px"><table class="lt">'+
-    '<thead><tr><th>Player</th><th>Att</th><th>Comp</th><th>Pct</th><th>Yds</th><th>TD</th><th>INT</th><th>1st</th><th>Ru att</th><th>Ru yds</th><th>Ru TD</th><th>Sk</th></tr></thead>'+
-    '<tbody>'+rows+'</tbody></table></div>';
+  return '<div class="sth">QB</div><div class="stcard"><table class="stt">'+
+    '<thead>'+
+    '<tr><th class="pl" rowspan="2">Player</th>'+
+      '<th class="grp" colspan="7">PASSING</th>'+
+      '<th class="grp sep" colspan="4">RUSHING</th>'+
+      '<th class="tot sep" rowspan="2">Sack</th></tr>'+
+    '<tr><th>Att</th><th>Cmp</th><th>Pct</th><th>Yds</th><th>TD</th><th>INT</th><th>1st</th>'+
+      '<th class="sep">Att</th><th>Yds</th><th>TD</th><th>1st</th></tr>'+
+    '</thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 function stPlayerTable(title, list){
   if (!list.length) return '';
   var rows = list.map(function(r){
     var s=r.s;
-    return '<tr><td>'+bsPlayerName(r.key)+'</td>'+
+    return '<tr><td class="nm">'+bsPlayerName(r.key)+'</td>'+
       '<td>'+s.rushAtt+'</td><td>'+s.rushYds+'</td><td>'+s.rushTDs+'</td><td>'+s.rush1D+'</td>'+
-      '<td>'+s.tgts+'</td><td>'+s.rec+'</td><td>'+s.recYds+'</td><td>'+s.recTDs+'</td><td>'+s.rec1D+'</td>'+
-      '<td style="font-weight:600">'+r.ap+'</td></tr>';
+      '<td class="sep">'+s.tgts+'</td><td>'+s.rec+'</td><td>'+s.recYds+'</td><td>'+s.recTDs+'</td><td>'+s.rec1D+'</td>'+
+      '<td class="sep" style="font-weight:600">'+r.ap+'</td></tr>';
   }).join('');
-  return '<div class="sth">'+title+'</div><div class="card" style="padding:10px 12px"><table class="lt">'+
-    '<thead><tr><th>Player</th><th>Ru att</th><th>Ru yds</th><th>Ru TD</th><th>Ru 1st</th><th>Tgt</th><th>Rec</th><th>Rec yds</th><th>Rec TD</th><th>Rec 1st</th><th>All-pur</th></tr></thead>'+
-    '<tbody>'+rows+'</tbody></table></div>';
+  return '<div class="sth">'+title+'</div><div class="stcard"><table class="stt">'+
+    '<thead>'+
+    '<tr><th class="pl" rowspan="2">Player</th>'+
+      '<th class="grp" colspan="4">RUSHING</th>'+
+      '<th class="grp sep" colspan="5">RECEIVING</th>'+
+      '<th class="tot sep" rowspan="2">All<br>Purpose</th></tr>'+
+    '<tr><th>Att</th><th>Yds</th><th>TD</th><th>1st</th>'+
+      '<th class="sep">Tgt</th><th>Rec</th><th>Yds</th><th>TD</th><th>1st</th></tr>'+
+    '</thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 function stDriveTable(ps){
@@ -2036,15 +2079,16 @@ function stDriveTable(ps){
   var rows = dr.map(function(x,i){
     if (x.pen) anyPen = true;
     var res = x.result ? x.result : '<span style="color:#6e6e73">In progress</span>';
-    return '<tr><td>'+(i+1)+'</td>'+
+    return '<tr><td class="nm">'+(i+1)+'</td>'+
       '<td>'+x.plays+(x.pen?'<span style="color:#c77700">*</span>':'')+'</td>'+
       '<td>'+x.yards+'</td>'+
-      '<td style="text-align:left">'+res+'</td></tr>';
+      '<td class="nm">'+res+'</td></tr>';
   }).join('');
-  return '<div class="sth">Drives</div><div class="card" style="padding:10px 12px">'+
-    '<table class="lt"><thead><tr><th>Drive</th><th>Plays</th><th>Yards</th><th>Result</th></tr></thead>'+
+  return '<div class="sth">Drives</div><div class="stcard"><table class="stt">'+
+    '<thead><tr><th class="pl" style="width:16%">Drive</th><th>Plays</th><th>Yards</th>'+
+    '<th class="pl" style="width:42%">Result</th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table>'+
-    (anyPen ? '<div style="font-size:10px;color:#6e6e73;margin-top:6px">* drive included a penalty</div>' : '')+
+    (anyPen ? '<div style="font-size:10px;color:#6e6e73;padding:6px 8px">* drive included a penalty</div>' : '')+
     '</div>';
 }
 
@@ -2055,7 +2099,7 @@ function stRender(){
     var any = Object.keys(games).some(function(id){ return games[id].plays && games[id].plays.length; });
     if (!any) { el.innerHTML = '<div class="es">No games logged yet.</div>'; return; }
     var sn = computeSeasonStats(), sp = splitPlayers(sn.pls);
-    el.innerHTML = stTeamCards(sn.team, true) + stQBTable(sn.qbs) +
+    el.innerHTML = stRpBar(sn.team) + stTeamCards(sn.team, true) + stQBTable(sn.qbs) +
                    stPlayerTable('RB', sp.rb) + stPlayerTable('WR', sp.wr);
     return;
   }
@@ -2069,7 +2113,7 @@ function stRender(){
   var head = '<div style="font-size:12px;color:#6e6e73;margin-bottom:10px">' +
     (game.homeAway==='away'?'@ ':'vs. ') + game.opponent + (dt?' \u2014 '+dt:'') +
     ' \u00b7 HB ' + (game.scoreUs||0) + ', ' + game.opponent + ' ' + (game.scoreThem||0) + '</div>';
-  g.innerHTML = head + stTeamCards(st.team, false) + stDriveTable(game.plays) +
+  g.innerHTML = head + stRpBar(st.team) + stTeamCards(st.team, false) + stDriveTable(game.plays) +
                 stQBTable(st.qbs) + stPlayerTable('RB', pl.rb) + stPlayerTable('WR', pl.wr);
 }
 
