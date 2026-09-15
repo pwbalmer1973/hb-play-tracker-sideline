@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#1a3a8c">
 <link rel="manifest" href="manifest.json">
-<title>HB Play Tracker Sideline</title>
+<title>HB Sideline Play Tracker</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;background:#f5f5f7;color:#1d1d1f;min-height:100vh}
@@ -190,7 +190,7 @@ button{cursor:pointer;font-family:inherit}
 <div class="app">
 <div class="hdr">
   <div class="hdr-logo"><img src="data:image/png;base64,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" alt="HB" width="54" height="44" style="display:block"></div>
-  <div><div class="hdr-title">HB Play Tracker Sideline</div><div class="hdr-sub">Hollis-Brookline Football</div></div>
+  <div><div class="hdr-title">HB Sideline Play Tracker</div><div class="hdr-sub">Hollis-Brookline Football</div></div>
 </div>
 <div class="tabs-wrap">
   <div class="offbanner" id="offbanner">&#9888; Offline &mdash; running from cache.</div>
@@ -840,8 +840,9 @@ function kpSetResult(resVal){
 function kpShortcutResult(resVal, forceZero){
   // A sack must have real yardage — block until it's entered.
   if (resVal === 'Sack') {
-    var typed = (kpValue === '') ? 0 : parseInt((kpNeg?'-':'')+kpValue, 10);
+    var typed = (kpValue === '') ? 0 : Math.abs(parseInt(kpValue, 10)) || 0;
     if (!typed) { alert('Enter the yards lost on the sack.'); return; }
+    kpValue = String(typed); kpNeg = true;   // a sack is always a loss
   }
   if (forceZero) { kpValue = '0'; kpNeg = false; }
   var out = (kpValue === '') ? '0' : ((kpNeg ? '-' : '') + kpValue);
@@ -852,7 +853,7 @@ function kpShortcutResult(resVal, forceZero){
   kpSetResult(resVal);
   // Gain/Loss: an incomplete has none; a sack is a loss.
   if (resVal === 'Incomplete') setExec('');
-  else if (resVal === 'Sack') setExec(parseInt(out,10) < 0 ? 'Loss' : '');
+  else if (resVal === 'Sack') setExec('Loss');
 
   // An incomplete pass still has an intended receiver, so capture the target.
   if (resVal === 'Incomplete') {
@@ -917,7 +918,9 @@ function onResultChange() {
 
 function tdYards(){
   var res=document.getElementById('res').value;
-  if(res==='Interception'||res==='Fumble'){
+  // A fumble keeps whatever was gained before the ball came out. An
+  // interception has no yardage for the offense.
+  if(res==='Interception'){
     document.getElementById('yds').value='0';
     if(typeof kpDisplay==='function') kpDisplay('yds');
   }
@@ -1341,6 +1344,8 @@ function logPlay(){
   if(!qbCheck){ alert('Choose a QB before logging this play.'); return; }
   var ps=plays();
   var yards=parseInt(yr,10);
+  // A sack or a safety is always a loss, however the yardage got entered.
+  if ((res==='Sack' || res==='Safety') && yards > 0) yards = -yards;
   var qbv=document.getElementById('qb').value.trim()||lastQB;
   var call=[document.getElementById('form').value,document.getElementById('mot').value,document.getElementById('hole').value,document.getElementById('play').value].filter(Boolean).join(' ');
   var p={
@@ -1401,6 +1406,8 @@ function applyLogSort(list){
   if(logSort==='down'){
     var DO={'1st':1,'2nd':2,'3rd':3,'4th':4};
     arr.sort(function(a,b){ return (DO[a.down]||9)-(DO[b.down]||9); });
+  } else if(logSort==='playtype'){
+    arr.sort(function(a,b){ return String(a.playtype||'').localeCompare(String(b.playtype||'')); });
   } else if(logSort==='call'){
     arr.sort(function(a,b){ return String(a.call||'').localeCompare(String(b.call||'')); });
   } else if(logSort==='player'){
@@ -1438,7 +1445,7 @@ function renderLog(){
       '</tr>';
   }).join('');
   el.innerHTML='<table class="lt"><thead><tr>'+
-    '<th>Qtr</th>'+sortHdr('down','Dn')+sortHdr('call','Call')+'<th>Type</th><th>Yds</th>'+
+    '<th>Qtr</th>'+sortHdr('down','Dn')+sortHdr('call','Call')+sortHdr('playtype','Type')+'<th>Yds</th>'+
     sortHdr('result','Result')+sortHdr('player','Carrier')+'<th>QB</th><th></th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table>';
 }
@@ -1809,8 +1816,9 @@ function walkDrives(ps){
     if (p.down==='1st'){ down=1; togo=10; }
     else if (di>=0){ down=di+1; }
     var startDown=down, startTogo=togo, conv=false, pen=(p.result==='O Penalty'||p.result==='D Penalty');
+    var isTD=(p.result==='Touchdown');
 
-    if (p.result==='Touchdown'){ conv=true; down=1; togo=10; }
+    if (isTD){ conv=true; down=1; togo=10; }
     else if (p.result==='1st down'){ conv=true; down=1; togo=10; }
     else if (PC.indexOf(p.result)>=0){ down=1; togo=10; }
     else {
@@ -1818,7 +1826,9 @@ function walkDrives(ps){
       if (togo<=0){ conv=true; down=1; togo=10; }
       else if (!pen){ down++; if (down>4){ down=1; togo=10; } }
     }
-    rows.push({p:p, down:startDown, togo:startTogo, converted:conv, penalty:pen});
+    // A touchdown ends the series and counts as a conversion, but it is a score,
+    // not a first down, so it earns no first-down credit.
+    rows.push({p:p, down:startDown, togo:startTogo, converted:conv, firstDown:(conv && !isTD), penalty:pen});
   }
   return { rows:rows, next:{ down:DOWNS[down-1], togo:togo } };
 }
@@ -1844,7 +1854,7 @@ function computeDrives(ps){
 }
 
 function emptyTeam(){
-  return {totYds:0,rushYds:0,passYds:0,plays:0,turnovers:0,
+  return {totYds:0,rushYds:0,passYds:0,plays:0,turnovers:0,runCalls:0,passCalls:0,
           fd:0,fdRush:0,fdPass:0,fdPen:0,
           d3a:0,d3c:0,d4a:0,d4c:0,ptsFor:0,ptsAgn:0,w:0,l:0,t:0,games:0};
 }
@@ -1857,13 +1867,14 @@ function computeStats(ps){
   w.rows.forEach(function(r){
     var p=r.p, y=(p.yards||0), isRun=(p.playtype==='Run'||p.playtype==='Toss'), isPass=(p.playtype==='Pass');
     t.totYds += y;
-    if (p.playtype==='Run') t.rushYds += y;
-    if (isPass || p.playtype==='Toss') t.passYds += y;
+    if (isRun) t.rushYds += y;     // a toss is a lateral, so it counts as a run
+    if (isPass) t.passYds += y;
+    if (isRun) t.runCalls++; else if (isPass) t.passCalls++;
     if (p.result==='Fumble'||p.result==='Fumble (after catch)'||p.result==='Interception') t.turnovers++;
 
     if (r.down===3 && !r.penalty){ t.d3a++; if (r.converted) t.d3c++; }
     if (r.down===4 && !r.penalty){ t.d4a++; if (r.converted) t.d4c++; }
-    if (r.converted){
+    if (r.firstDown){
       t.fd++;
       if (r.penalty) t.fdPen++;
       else if (isRun) t.fdRush++;
@@ -1882,26 +1893,26 @@ function computeStats(ps){
           else if (p.result!=='Incomplete'){
             q.comp++; q.passYds+=y;
             if (p.result==='Touchdown') q.passTDs++;
-            if (r.converted) q.pass1D++;
+            if (r.firstDown) q.pass1D++;
           }
         }
       }
-      if (p.playtype==='Run' && p.player===qb){
+      if (isRun && p.player===qb){
         q.rushAtt++; q.rushYds+=y;
         if (p.result==='Touchdown') q.rushTDs++;
-        if (r.converted) q.rush1D++;
+        if (r.firstDown) q.rush1D++;
       }
     }
 
     var who=p.player;
     if (who && who!=='\u2014' && who!=='-'){
-      var isQBRush = (p.playtype==='Run') && p.qb && p.player===p.qb;
+      var isQBRush = isRun && p.qb && p.player===p.qb;
       if (!pls[who]) pls[who]=emptyPl();
       var s=pls[who];
       if (isRun && !isQBRush){
         s.rushAtt++; s.rushYds+=y;
         if (p.result==='Touchdown') s.rushTDs++;
-        if (r.converted) s.rush1D++;
+        if (r.firstDown) s.rush1D++;
       }
       // A sack has no intended receiver, so it is not a target.
       if (isPass && p.result!=='Sack'){
@@ -1910,7 +1921,7 @@ function computeStats(ps){
         if (!noCatch){
           s.rec++; s.recYds+=y;
           if (p.result==='Touchdown') s.recTDs++;
-          if (r.converted) s.rec1D++;
+          if (r.firstDown) s.rec1D++;
         }
       }
     }
@@ -1980,6 +1991,7 @@ function stTeamCards(t, season){
     stCard('Rush', t.rushYds) +
     stCard('Pass', t.passYds) +
     stCard('Plays', t.plays) +
+    stCard('Run / Pass', t.runCalls+' / '+t.passCalls, pct(t.runCalls, t.runCalls+t.passCalls)+' run') +
     stCard('1st downs', t.fd, t.fdRush+' ru / '+t.fdPass+' pa'+(t.fdPen?' / '+t.fdPen+' pen':'')) +
     stCard('3rd down', t.d3c+'/'+t.d3a, pct(t.d3c,t.d3a)) +
     stCard('4th down', t.d4c+'/'+t.d4a, pct(t.d4c,t.d4a)) +
@@ -2078,6 +2090,7 @@ function buildBoxScoreText(g) {
   L.push('Rushing Yards: ' + t.rushYds);
   L.push('Passing Yards: ' + t.passYds);
   L.push('Total Plays: ' + t.plays);
+  L.push('Run / Pass Split: ' + t.runCalls + ' run, ' + t.passCalls + ' pass (' + pct(t.runCalls, t.runCalls+t.passCalls) + ' run)');
   L.push('1st Downs: ' + t.fd + ' (' + t.fdRush + ' rush, ' + t.fdPass + ' pass' + (t.fdPen ? ', ' + t.fdPen + ' penalty' : '') + ')');
   L.push('3rd Down Conversions: ' + t.d3c + '/' + t.d3a + ' (' + pct(t.d3c,t.d3a) + ')');
   L.push('4th Down Conversions: ' + t.d4c + '/' + t.d4a + ' (' + pct(t.d4c,t.d4a) + ')');
@@ -2127,7 +2140,7 @@ function buildBoxScoreText(g) {
   playerLines('WR', sp.wr);
 
   L.push('\u2014');
-  L.push('Sent from HB Play Tracker Sideline');
+  L.push('Sent from HB Sideline Play Tracker');
 
   return L.join('\r\n');
 }
