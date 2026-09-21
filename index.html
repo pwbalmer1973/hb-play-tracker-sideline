@@ -159,6 +159,7 @@ button{cursor:pointer;font-family:inherit}
 .pen-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #f0f0f2;cursor:pointer;font-size:14px;color:#1d1d1f}
 .pen-item:last-child{border-bottom:none}
 .pen-item:active{background:#eef3fb}
+.pen-afd{font-size:9px;font-weight:700;color:#c62828;background:#ffe5e5;padding:1px 5px;border-radius:3px;margin-left:6px}
 .pen-yds{font-weight:700;font-size:13px;color:#1a3a8c;margin-left:12px;white-space:nowrap}
 .pen-afd{font-size:9px;font-weight:700;color:#c62828;background:#ffe5e5;padding:1px 5px;border-radius:3px;margin-left:6px}
 .pk-btn{width:100%;padding:9px 10px;font-size:14px;font-weight:500;color:#1d1d1f;background:#fff;border:1px solid #d2d2d7;border-radius:8px;text-align:left;cursor:pointer;min-height:38px;display:flex;align-items:center;justify-content:space-between;gap:6px}
@@ -288,7 +289,7 @@ button{cursor:pointer;font-family:inherit}
         <select id="ptype" onchange="autoComp();onPlayerInput()"><option value="">&#8212;</option><option value="Run">Run</option><option value="Pass">Pass</option><option value="Toss">Toss</option></select>
       </div>
       <div class="fg"><label class="fl">Yards gained / lost</label>
-        <button type="button" class="pk-btn empty" id="pk-yds" onclick="openKeypad('yds','Yards gained / lost',true,afterYards)"><span id="pk-yds-txt">&#8212;</span><span class="pk-caret">&#9662;</span></button>
+        <button type="button" class="pk-btn empty" id="pk-yds" onclick="if(!isBusy())openKeypad('yds','Yards gained / lost',true,afterYards)"><span id="pk-yds-txt">&#8212;</span><span class="pk-caret">&#9662;</span></button>
         <input type="number" id="yds" style="display:none" oninput="autoComp()">
       </div>
       <select id="exec" style="display:none">
@@ -333,7 +334,7 @@ button{cursor:pointer;font-family:inherit}
         </div></div>
     </div>
     <div class="r2">
-      <div class="fg"><label class="fl">&nbsp;</label><button class="bp" onclick="logPlay()" style="width:100%" id="log-play-btn">+ Log play</button></div>
+      <div class="fg"><label class="fl">&nbsp;</label><button class="bp" onclick="if(!isBusy())logPlay()" style="width:100%" id="log-play-btn">+ Log play</button></div>
       <div class="fg"></div>
     </div>
   </div>
@@ -554,14 +555,22 @@ function onQBInput(){
   showAutocomplete('qb','qb-list',rosterMatch(q,QB_ROSTER));
 }
 
+// Who belongs in a picker. Unrecognised or blank positions show everywhere.
+function eligibleFor(field){
+  var pt = document.getElementById('ptype').value;
+  return ROSTER.filter(function(p){
+    var key = p.num+' '+p.name;
+    if (posUnknown(key)) return true;
+    if (field === 'qb') return posTokens(key).indexOf('QB') >= 0;
+    // Ball carrier / target: a pass goes to receivers and backs, never a QB.
+    if (pt === 'Pass') return hasPos(key, WR_POS) || hasPos(key, RB_POS);
+    return true;   // runs, and anything with no play type yet, show everyone
+  });
+}
+
 function onPlayerInput(){
   var q=document.getElementById('plyr').value;
-  var pt=document.getElementById('ptype').value;
-  var list=ROSTER;
-  if(pt==='Run'||pt==='Toss'){
-    list=ROSTER; // full roster available for runs
-  }
-  showAutocomplete('plyr','plyr-list',rosterMatch(q,list));
+  showAutocomplete('plyr','plyr-list',rosterMatch(q,eligibleFor('plyr')));
 }
 var games={},gid=null,Q=1,lastQB='',editId=null;
 
@@ -598,7 +607,7 @@ function showTab(t){
 // reads .value keeps working untouched. The modal only changes how a value is chosen.
 
 var PICKER_LABELS = {
-  dn:'Down', form:'Formation', mot:'Motion', hole:'Protection / Hole', play:'Play',
+  dn:'Down', form:'Formation', ptype:'Play type', mot:'Motion', hole:'Protection / Hole', play:'Play',
   exec:'Gain / Loss', res:'Result', plyr:'Ball carrier / target', qb:'QB'
 };
 
@@ -654,7 +663,24 @@ function afterYards() {
   var res = document.getElementById('res').value;
   var skip = ['Sack','O Penalty','D Penalty','Interception'];
   if (skip.indexOf(res) >= 0) { tryAutoLog(); return; }
-  setTimeout(function(){ openPicker('plyr', null, -1); }, 140);
+  handoff(function(){ openPicker('plyr', null, -1); }, 140);
+}
+
+// ===== HANDOFF GUARD =====
+// While one popup is handing off to the next, taps on the form behind are
+// ignored, so a quick second tap cannot open a stray popup underneath.
+var pendingHandoffs = 0, handoffCap = 0;
+function handoff(fn, ms){
+  pendingHandoffs++;
+  handoffCap = Date.now() + ms + 500;   // safety: never lock the form for long
+  setTimeout(function(){
+    pendingHandoffs = Math.max(0, pendingHandoffs - 1);
+    fn();
+  }, ms);
+}
+function isBusy(){
+  if (pendingHandoffs > 0 && Date.now() > handoffCap) pendingHandoffs = 0;
+  return pendingHandoffs > 0;
 }
 
 function openPicker(fieldId, chain, chainIdx) {
@@ -667,7 +693,7 @@ function openPicker(fieldId, chain, chainIdx) {
   var html = '';
   if (fieldId === 'plyr' || fieldId === 'qb') {
     html += '<div class="pen-item" onclick="pickValue(\'\')"><span>\u2014</span></div>';
-    ROSTER.forEach(function(p){
+    eligibleFor(fieldId).forEach(function(p){
       var v = (p.num+' '+p.name).replace(/'/g,'&#39;');
       html += '<div class="pen-item" onclick="pickValue(\''+v+'\')">' +
               '<span>'+p.num+' '+p.name+'</span>' +
@@ -682,11 +708,21 @@ function openPicker(fieldId, chain, chainIdx) {
     });
   }
   document.getElementById('picker-list').innerHTML = html;
+  penOpen = false;
+  closeKeypad(true);     // only one popup on screen at a time
   document.getElementById('picker-modal').classList.add('show');
 }
 
 function closePicker(stopChain) {
   document.getElementById('picker-modal').classList.remove('show');
+  if (penOpen) {
+    penOpen = false;
+    var r = document.getElementById('res');
+    if (r && (r.value === 'O Penalty' || r.value === 'D Penalty')) {
+      r.value = ''; lastResultValue = '';
+      if (typeof pkDisplay === 'function') pkDisplay('res');
+    }
+  }
   if (stopChain) { pickerChain = null; pickerChainIdx = -1; }
   pickerField = null;
 }
@@ -712,16 +748,34 @@ function pickValue(val) {
   // Now fire the field's existing onchange logic so auto-fill still works
   if (el && typeof el.onchange === 'function') el.onchange();
 
+  // A missed play call skips the rest of the call and asks for the play type,
+  // whether it was reached through the chain or by tapping Formation.
+  if (fieldId === 'form' && val === MPC) {
+    pickerChain = null; pickerChainIdx = -1;
+    ['mot','hole','play'].forEach(function(f){
+      var e=document.getElementById(f); if(e) e.selectedIndex=0;
+    });
+    refreshAllPickers();
+    handoff(function(){ openPicker('ptype', null, -1); }, 140);
+    return;
+  }
+  // Picking the play type on an MPC play continues into yards as usual.
+  if (fieldId === 'ptype' && val && document.getElementById('form').value === MPC && !wasEditing) {
+    pickerChain = null; pickerChainIdx = -1;
+    handoff(function(){ openKeypad('yds','Yards gained / lost',true,afterYards); }, 140);
+    return;
+  }
+
   if (chain && idx >= 0 && idx < chain.length - 1 && !endEarly) {
     var nextIdx = idx + 1;
-    setTimeout(function(){ openPicker(chain[nextIdx], chain, nextIdx); }, 120);
+    handoff(function(){ openPicker(chain[nextIdx], chain, nextIdx); }, 120);
   } else {
     var wasCall = (chain === CHAIN_CALL || chain === CHAIN_FULL);
     pickerChain = null; pickerChainIdx = -1;
     // Play-call chain flows straight into yards. A Money formation short-circuits
     // the rest of the call but still continues to yards.
     if (wasCall) {
-      setTimeout(function(){ openKeypad('yds','Yards gained / lost',true,afterYards); }, 140);
+      handoff(function(){ openKeypad('yds','Yards gained / lost',true,afterYards); }, 140);
     }
     // Ball carrier is the last step of a normal play — auto-log if enabled.
     // Only a real player selection counts; "—" leaves it to the button.
@@ -733,6 +787,7 @@ function pickValue(val) {
 
 // Entry point from the visible buttons
 function pkTap(fieldId) {
+  if (isBusy()) return;
   var el = document.getElementById(fieldId);
   var isBlank = !el || !el.value;
   // Two ways into the same sequence: from Down for the whole thing, or from a
@@ -747,7 +802,7 @@ function pkTap(fieldId) {
 function tryAutoLog(){
   if(!autoLogOn()) return;
   if(editId) return;
-  setTimeout(function(){ logPlay(); }, 160);
+  handoff(function(){ logPlay(); }, 160);
 }
 
 // ===== NUMERIC KEYPAD MODAL =====
@@ -758,6 +813,8 @@ var kpAllowNeg = false;
 var kpOnDone = null;
 
 function openKeypad(fieldId, title, allowNeg, onDone) {
+  // Only one popup on screen at a time
+  if (document.getElementById('picker-modal').classList.contains('show')) closePicker(true);
   kpField = fieldId;
   kpAllowNeg = !!allowNeg;
   kpOnDone = onDone || null;
@@ -871,7 +928,7 @@ function kpShortcutResult(resVal, forceZero){
 
   // An incomplete pass still has an intended receiver, so capture the target.
   if (resVal === 'Incomplete') {
-    setTimeout(function(){ openPicker('plyr', null, -1); }, 140);
+    handoff(function(){ openPicker('plyr', null, -1); }, 140);
     return;
   }
   tryAutoLog();
@@ -887,20 +944,93 @@ function kpShortcutTouchdown(){
   kpDisplay('yds');
   kpSetResult('Touchdown');
   setExec('Gain');
-  setTimeout(function(){ openPicker('plyr', null, -1); }, 140);
+  handoff(function(){ openPicker('plyr', null, -1); }, 140);
 }
 
-function kpShortcutPenalty(kind){
-  // Type the yardage first: O Pen is always a loss, D Pen always a gain,
-  // whichever way it was typed. Nothing typed still logs 0.
-  var typed = (kpValue === '') ? 0 : Math.abs(parseInt(kpValue, 10)) || 0;
-  var signed = (kind === 'O') ? -typed : typed;
-  closeKeypad(false);
-  document.getElementById('yds').value = String(signed);
-  kpDisplay('yds');
-  kpSetResult(kind === 'O' ? 'O Penalty' : 'D Penalty');
+var O_PENALTIES = [
+  {n:'False start', y:5},
+  {n:'Illegal formation', y:5},
+  {n:'Illegal motion/shift', y:5},
+  {n:'Illegal procedure', y:5},
+  {n:'Delay of game', y:5},
+  {n:'Holding', y:10},
+  {n:'Illegal block in the back', y:10},
+  {n:'Illegal use of hands', y:10},
+  {n:'Chop block', y:15},
+  {n:'Clipping', y:15},
+  {n:'Personal foul', y:15},
+  {n:'Unsportsmanlike conduct', y:15}
+];
+var D_PENALTIES = [
+  {n:'Offside', y:5},
+  {n:'Encroachment', y:5},
+  {n:'Neutral zone infraction', y:5},
+  {n:'Illegal substitution', y:5},
+  {n:'Face mask (incidental)', y:5},
+  {n:'Holding', y:10},
+  {n:'Illegal use of hands', y:10},
+  {n:'Pass interference', y:15},
+  {n:'Face mask (flagrant)', y:15},
+  {n:'Personal foul', y:15},
+  {n:'Targeting', y:15},
+  {n:'Roughing the passer', y:15, afd:true},
+  {n:'Roughing the kicker', y:15, afd:true},
+  {n:'Roughing the snapper', y:15, afd:true},
+  {n:'Unsportsmanlike conduct', y:15, afd:true}
+];
+
+// Only names that appear on both lists carry an O or D prefix.
+function penLabel(kind, name){
+  var other = (kind === 'O') ? D_PENALTIES : O_PENALTIES;
+  var shared = other.some(function(p){ return p.n === name; });
+  return shared ? (kind + ' ' + name) : name;
+}
+
+var penKind = null;
+function openPenaltyModal(kind){
+  penKind = kind;
+  var list = (kind === 'O') ? O_PENALTIES : D_PENALTIES;
+  var sign = (kind === 'O') ? -1 : 1;
+  document.getElementById('picker-title').textContent =
+    (kind === 'O' ? 'Offensive penalty' : 'Defensive penalty');
+  document.getElementById('picker-list').innerHTML = list.map(function(p){
+    var label = penLabel(kind, p.n).replace(/'/g,'&#39;');
+    return '<div class="pen-item" onclick="pickPenalty(\'' + label + '\',' + (sign*p.y) + ',' + (p.afd?'true':'false') + ')">' +
+           '<span>' + penLabel(kind, p.n) + (p.afd ? '<span class="pen-afd">AUTO 1ST</span>' : '') + '</span>' +
+           '<span class="pen-yds">' + (sign < 0 ? '-' : '+') + p.y + '</span></div>';
+  }).join('');
+  pickerField = null; pickerChain = null; pickerChainIdx = -1;
+  closeKeypad(true);     // only one popup on screen at a time
+  penOpen = true;
+  document.getElementById('picker-modal').classList.add('show');
+}
+
+// The list supplies the yardage; anything typed on the keypad is discarded.
+function pickPenalty(label, yards, afd){
+  penOpen = false;
+  document.getElementById('picker-modal').classList.remove('show');
+  document.getElementById('yds').value = String(yards);
+  if (typeof kpDisplay === 'function') kpDisplay('yds');
   setExec('');
-  logPenaltyNow();
+  // The penalty name becomes the play call
+  ['mot','hole','play'].forEach(function(f){
+    var e=document.getElementById(f); if(e) e.selectedIndex=0;
+  });
+  penCall = label;
+  var resEl = document.getElementById('res');
+  resEl.value = (penKind === 'O') ? 'O Penalty' : 'D Penalty';
+  lastResultValue = resEl.value;
+  if (typeof pkDisplay === 'function') pkDisplay('res');
+  penAutoFirst = !!afd;
+  refreshAllPickers();
+  handoff(function(){ logPlay(); }, 140);
+}
+
+var penCall = null, penAutoFirst = false, penOpen = false;
+
+function kpShortcutPenalty(kind){
+  closeKeypad(false);
+  handoff(function(){ openPenaltyModal(kind); }, 120);
 }
 
 function closeKeypad(cancelled) {
@@ -913,13 +1043,25 @@ var lastResultValue = '';
 // A penalty has nothing else to enter, so it logs as soon as it is chosen.
 function logPenaltyNow(){
   if (editId) return;
-  setTimeout(function(){ logPlay(); }, 160);
+  handoff(function(){ logPlay(); }, 160);
 }
 
 function onResultChange() {
   var res = document.getElementById('res').value;
   var changed = (res !== lastResultValue);
   lastResultValue = res;
+  if (changed && (res === 'Punt' || res === 'Safety')) {
+    document.getElementById('plyr').value = '';
+    document.getElementById('qb').value = '';
+    logPenaltyNow();   // nothing left to enter
+    return;
+  }
+  if ((res === 'O Penalty' || res === 'D Penalty') && !editId) {
+    penCall = null; penAutoFirst = false;
+    var kind = (res === 'O Penalty') ? 'O' : 'D';
+    handoff(function(){ openPenaltyModal(kind); }, 120);
+    return;
+  }
   if (changed && (res === 'O Penalty' || res === 'D Penalty')) {
     document.getElementById('yds').value = '0';
     if (typeof kpDisplay === 'function') kpDisplay('yds');
@@ -988,27 +1130,10 @@ function autoHoleType(){
 // deleting or editing a play corrects it automatically.
 var togoOverride = null;
 
+// The Down field reads from the same drive walker as the stats, so the two can
+// never disagree (an automatic first down included).
 function driveState(){
-  var ps = plays();
-  var down = 1, togo = 10;
-  for (var i=0;i<ps.length;i++){
-    var p = ps[i];
-    // Trust the down that was on screen when the play was logged. A 1st means
-    // a fresh series, however it got there (manual override included).
-    var di = DOWNS.indexOf(p.down);
-    if (p.down === '1st') { down = 1; togo = 10; }
-    else if (di >= 0) { down = di + 1; }
-
-    if (PC.indexOf(p.result) >= 0) { down = 1; togo = 10; continue; }
-    if (p.result === '1st down') { down = 1; togo = 10; continue; }
-
-    togo -= (p.yards || 0);
-    if (togo <= 0) { down = 1; togo = 10; continue; }
-    if (p.result === 'O Penalty' || p.result === 'D Penalty') continue;  // no down consumed
-    down++;
-    if (down > 4) { down = 1; togo = 10; }   // drive is over either way
-  }
-  return { down: DOWNS[down-1], togo: togo };
+  return walkDrives(plays()).next;
 }
 
 // What the form should show for the next play
@@ -1035,6 +1160,10 @@ function onDownChange(){
   togoOverride = (v === '1st') ? 10 : null;
   updateToGo();
 }
+
+// Results that are not offensive snaps: they end the drive and stay out of
+// every offensive number.
+var NO_OFFENSE = ['Punt','Safety'];
 
 var AUTO_RESULTS = ['','Gain','Loss','Completion'];
 
@@ -1103,10 +1232,16 @@ function calcDrive(ps){
   return{dp:dp,dy:dy};
 }
 function updateStats(){
-  var ps=plays(),n=ps.length,tot=ps.reduce(function(s,p){return s+p.yards;},0);
+  var ps=plays(), n=ps.length;
+  // Net yards and average count snaps from scrimmage only — no penalties,
+  // punts or safeties.
+  var live=ps.filter(function(p){
+    return p.result!=='O Penalty' && p.result!=='D Penalty' && NO_OFFENSE.indexOf(p.result)<0;
+  });
+  var tot=live.reduce(function(s,p){return s+(p.yards||0);},0);
   document.getElementById('spn').textContent=n+1;
   document.getElementById('syd').textContent=tot;
-  document.getElementById('sav').textContent=n?(tot/n).toFixed(1):'\u2014';
+  document.getElementById('sav').textContent=live.length?(tot/live.length).toFixed(1):'\u2014';
   var d=calcDrive(ps);
   document.getElementById('sdr').textContent=d.dp>0?d.dp+' pl / '+d.dy+' yds':'\u2014';
   updateToGo();
@@ -1296,6 +1431,7 @@ function editPlay(id){
 }
 
 function cancelEdit(){
+  penCall=null; penAutoFirst=false;
   editId=null;
   document.getElementById('edit-banner').style.display='none';
   document.getElementById('log-play-btn').textContent='+ Log play';
@@ -1331,6 +1467,7 @@ function createGameFromModal(){
 // Clear the play form: everything below row 1 is wiped. Row 1 (down, distance,
 // hash, yard line) is left exactly as it is.
 function clearPlayForm(){
+  penCall=null; penAutoFirst=false;
   editId=null;
   var eb=document.getElementById('edit-banner'); if(eb) eb.style.display='none';
   var lb=document.getElementById('log-play-btn'); if(lb) lb.textContent='+ Log play';
@@ -1345,30 +1482,40 @@ function clearPlayForm(){
 }
 
 function logPlay(){
+  var pc = penCall, pa = penAutoFirst;
+  penCall = null; penAutoFirst = false;
   if(!gid){alert('Please create or select a game first.');showTab('games');return;}
   var res=document.getElementById('res').value;
   if(!res){ alert('Choose a Result before logging this play.'); return; }
-  var NO_YARDS_REQUIRED=['Fumble','Incomplete','Punt','O Penalty','D Penalty'];
+  var NO_YARDS_REQUIRED=['Fumble','Incomplete','Punt','Safety','O Penalty','D Penalty'];
   var yr=document.getElementById('yds').value;
   if(!yr){
     if(NO_YARDS_REQUIRED.indexOf(res)>=0){ yr='0'; }
     else { alert('Enter the yards gained or lost before logging this play.'); return; }
   }
-  var qbCheck=(document.getElementById('qb').value||'').trim()||lastQB;
-  if(!qbCheck){ alert('Choose a QB before logging this play.'); return; }
+  // A punt, a safety or a penalty is not an offensive snap — no QB needed.
+  var isPenalty = (res === 'O Penalty' || res === 'D Penalty');
+  if (NO_OFFENSE.indexOf(res) < 0 && !isPenalty) {
+    var qbCheck=(document.getElementById('qb').value||'').trim()||lastQB;
+    if(!qbCheck){ alert('Choose a QB before logging this play.'); return; }
+  }
   var ps=plays();
   var yards=parseInt(yr,10);
   // A sack or a safety is always a loss, however the yardage got entered.
   if ((res==='Sack' || res==='Safety') && yards > 0) yards = -yards;
-  var qbv=document.getElementById('qb').value.trim()||lastQB;
-  var call=[document.getElementById('form').value,document.getElementById('mot').value,document.getElementById('hole').value,document.getElementById('play').value].filter(Boolean).join(' ');
+  var noOffense = NO_OFFENSE.indexOf(res) >= 0;
+  var qbv = noOffense ? '' : (document.getElementById('qb').value.trim()||lastQB);
+  var call = pc ? pc :
+    [document.getElementById('form').value,document.getElementById('mot').value,
+     document.getElementById('hole').value,document.getElementById('play').value].filter(Boolean).join(' ');
   var p={
     id:Date.now(),num:ps.length+1,quarter:Q,
     down:document.getElementById('dn').value||'1st',
+    autoFirst: pa || undefined,
     call:call,
     playtype:document.getElementById('ptype').value||'\u2014',
     yards:yards,result:res,qb:qbv,
-    player:document.getElementById('plyr').value.trim()||'\u2014',
+    player:noOffense ? '\u2014' : (document.getElementById('plyr').value.trim()||'\u2014'),
     exec:document.getElementById('exec').value||'',
     notes:''
   };
@@ -1388,7 +1535,8 @@ function logPlay(){
     games[gid].plays.push(p);
     scoreResult(res);
   }
-  if(qbv){lastQB=qbv;document.getElementById('qb').value=qbv;}
+  if(qbv){lastQB=qbv;}
+  document.getElementById('qb').value=lastQB||'';
   logSort=null;   // logging a play returns the log to chronological order
   save();updateStats();renderLog();syncDown();
   if(document.getElementById('pane-stats').classList.contains('active')) stRender();
@@ -1602,10 +1750,14 @@ function selectListText(id, withType) {
     .join('\n');
 }
 
+var MPC = 'MPC';   // missed play call: skips the rest of the call
+
 function rebuildSelectFromList(id, items) {
   var sel = document.getElementById(id);
   if (!sel) return;
-  sel.innerHTML = '<option value="">\u2014</option>' + items.map(function(v){
+  // MPC always sits at the top of the formation list, whatever gets imported
+  var lead = (id === 'form') ? '<option>'+MPC+'</option>' : '';
+  sel.innerHTML = '<option value="">\u2014</option>' + lead + items.map(function(v){
     if (v && typeof v === 'object') {
       return '<option data-type="'+(v.type||'')+'">'+v.name+'</option>';
     }
@@ -1697,7 +1849,7 @@ function restoreSetupData(setup) {
     if (setup.roster && setup.roster.length) {
       localStorage.setItem('hbRosterSideline', JSON.stringify(setup.roster));
       ROSTER.length = 0; setup.roster.forEach(function(p){ ROSTER.push(p); });
-      QB_ROSTER.length = 0; ROSTER.filter(function(p){return p.pos==='QB';}).forEach(function(p){ QB_ROSTER.push(p); });
+      QB_ROSTER.length = 0; eligibleFor('qb').forEach(function(p){ QB_ROSTER.push(p); });
     }
     if (setup.opponents && setup.opponents.length) { localStorage.setItem('hbOpponentsSideline', JSON.stringify(setup.opponents)); OPPONENTS.length=0; setup.opponents.forEach(function(o){OPPONENTS.push(o);}); }
   } catch(e){}
@@ -1717,7 +1869,7 @@ function rosterImportFromTextarea() {
   ROSTER.length = 0;
   newRoster.forEach(function(p){ ROSTER.push(p); });
   QB_ROSTER.length = 0;
-  ROSTER.filter(function(p){return p.pos==='QB';}).forEach(function(p){ QB_ROSTER.push(p); });
+  eligibleFor('qb').forEach(function(p){ QB_ROSTER.push(p); });
   try { localStorage.setItem('hbRosterSideline', JSON.stringify(ROSTER)); } catch(e){}
   toast('Roster updated \u2014 '+newRoster.length+' players');
 }
@@ -1832,6 +1984,7 @@ function walkDrives(ps){
     var startDown=down, startTogo=togo, conv=false, pen=(p.result==='O Penalty'||p.result==='D Penalty');
     var isTD=(p.result==='Touchdown');
 
+    if (p.autoFirst){ down=1; togo=10; rows.push({p:p, down:startDown, togo:startTogo, converted:true, firstDown:true, penalty:true}); continue; }
     if (isTD){ conv=true; down=1; togo=10; }
     else if (p.result==='1st down'){ conv=true; down=1; togo=10; }
     else if (PC.indexOf(p.result)>=0){ down=1; togo=10; }
@@ -1854,8 +2007,9 @@ function computeDrives(ps){
   function fresh(){ return {plays:0, yards:0, pen:false, result:null}; }
   rows.forEach(function(r){
     if (!cur) cur = fresh();
-    if (r.penalty) cur.pen = true; else cur.plays++;
-    cur.yards += (r.p.yards||0);
+    var noOff = NO_OFFENSE.indexOf(r.p.result) >= 0;
+    if (r.penalty) cur.pen = true; else if (!noOff) cur.plays++;
+    if (!noOff) cur.yards += (r.p.yards||0);
     if (PC.indexOf(r.p.result) >= 0){
       cur.result = r.p.result; drives.push(cur); cur = null; return;
     }
@@ -1880,18 +2034,26 @@ function computeStats(ps){
   t.plays = ps.length;
   w.rows.forEach(function(r){
     var p=r.p, y=(p.yards||0), isRun=(p.playtype==='Run'||p.playtype==='Toss'), isPass=(p.playtype==='Pass');
+    // A punt or safety ends the drive but is not an offensive play
+    if (NO_OFFENSE.indexOf(p.result) >= 0) { t.plays--; return; }
+    // A penalty is not a play, is not in the split and gains no yardage, but a
+    // first down it earns is counted on its own line.
+    if (r.penalty) {
+      t.plays--;
+      if (r.firstDown) { t.fd++; t.fdPen++; }
+      return;
+    }
+    if (isRun) t.runCalls++; else if (isPass) t.passCalls++;
     t.totYds += y;
     if (isRun) t.rushYds += y;     // a toss is a lateral, so it counts as a run
     if (isPass) t.passYds += y;
-    if (isRun) t.runCalls++; else if (isPass) t.passCalls++;
     if (p.result==='Fumble'||p.result==='Fumble (after catch)'||p.result==='Interception') t.turnovers++;
 
     if (r.down===3 && !r.penalty){ t.d3a++; if (r.converted) t.d3c++; }
     if (r.down===4 && !r.penalty){ t.d4a++; if (r.converted) t.d4c++; }
     if (r.firstDown){
       t.fd++;
-      if (r.penalty) t.fdPen++;
-      else if (isRun) t.fdRush++;
+      if (isRun) t.fdRush++;
       else if (isPass) t.fdPass++;
     }
 
@@ -1964,18 +2126,35 @@ function computeSeasonStats(){
 
 function pct(c,a){ return a ? Math.round(c/a*100)+'%' : '\u2014'; }
 function posOf(key){
-  var r=ROSTER.find(function(p){ return (p.num+' '+p.name)===key || p.name===key; });
-  return r ? (r.pos||'') : '';
+  var hits = ROSTER.filter(function(p){ return (p.num+' '+p.name)===key || p.name===key; });
+  return hits.map(function(p){ return (p.pos||'').toUpperCase(); }).join('/');
 }
-// RB and WR stay separate sections, split by the roster position.
+
+function posTokens(key){ return posOf(key).split(/[^A-Z]+/).filter(Boolean); }
+
+var WR_POS = ['WR','TE','SE','FL','SLOT'];
+var RB_POS = ['RB','FB','HB','TB','WB'];
+function hasPos(key, list){
+  var tk = posTokens(key);
+  return tk.some(function(p){ return list.indexOf(p) >= 0; });
+}
+// A player with no position on file, or one we do not recognise, is shown
+// everywhere in the pickers and lands in RB on the stat sheet.
+function posUnknown(key){
+  var tk = posTokens(key);
+  if (!tk.length) return true;
+  return !tk.some(function(p){ return p==='QB' || WR_POS.indexOf(p)>=0 || RB_POS.indexOf(p)>=0; });
+}
+
+// RB and WR stay separate sections. A receiver position wins, so a player
+// listed QB/WR shows his catches and carries on the WR line.
 function splitPlayers(pls){
   var rb=[], wr=[];
   Object.keys(pls).forEach(function(k){
     var s=pls[k];
     if (!s.rushAtt && !s.tgts) return;
     var row={key:k, s:s, ap:s.rushYds+s.recYds};
-    var pos=posOf(k).toUpperCase();
-    if (pos==='WR'||pos==='TE') wr.push(row); else rb.push(row);
+    if (hasPos(k, WR_POS)) wr.push(row); else rb.push(row);
   });
   rb.sort(function(a,b){return b.ap-a.ap;});
   wr.sort(function(a,b){return b.ap-a.ap;});
@@ -2021,7 +2200,7 @@ function stTeamCards(t, season){
     stCard('Rush', t.rushYds) +
     stCard('Pass', t.passYds) +
     stCard('Plays', t.plays) +
-    stCard('1st downs', t.fd, t.fdRush+' ru / '+t.fdPass+' pa'+(t.fdPen?' / '+t.fdPen+' pen':'')) +
+    stCard('1st downs', t.fd, t.fdRush+' ru / '+t.fdPass+' pa / '+t.fdPen+' pen') +
     stCard('3rd down', t.d3c+'/'+t.d3a, pct(t.d3c,t.d3a)) +
     stCard('4th down', t.d4c+'/'+t.d4a, pct(t.d4c,t.d4a)) +
     stCard('Turnovers', t.turnovers);
@@ -2135,7 +2314,7 @@ function buildBoxScoreText(g) {
   L.push('Passing Yards: ' + t.passYds);
   L.push('Total Plays: ' + t.plays);
   L.push('Run / Pass Split: ' + t.runCalls + ' run, ' + t.passCalls + ' pass (' + pct(t.runCalls, t.runCalls+t.passCalls) + ' run)');
-  L.push('1st Downs: ' + t.fd + ' (' + t.fdRush + ' rush, ' + t.fdPass + ' pass' + (t.fdPen ? ', ' + t.fdPen + ' penalty' : '') + ')');
+  L.push('1st Downs: ' + t.fd + ' (' + t.fdRush + ' rush, ' + t.fdPass + ' pass, ' + t.fdPen + ' penalty)');
   L.push('3rd Down Conversions: ' + t.d3c + '/' + t.d3a + ' (' + pct(t.d3c,t.d3a) + ')');
   L.push('4th Down Conversions: ' + t.d4c + '/' + t.d4a + ' (' + pct(t.d4c,t.d4a) + ')');
   L.push('Turnovers: ' + t.turnovers);
