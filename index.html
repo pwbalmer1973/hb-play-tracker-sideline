@@ -265,6 +265,7 @@ button{cursor:pointer;font-family:inherit}
         <button type="button" class="pk-btn empty" id="pk-form" onclick="pkTap('form')"><span>&#8212;</span><span class="pk-caret">&#9662;</span></button>
         <select id="form" onchange="frmType()" style="display:none">
           <option value="">&#8212;</option>
+          <option>MPC</option>
         </select>
       </div>
       <div class="fg"><label class="fl">Motion</label>
@@ -473,6 +474,9 @@ button{cursor:pointer;font-family:inherit}
 // PTM/FTM removed — play/formation type now comes from Setup-entered data-type on each dropdown option
 var TC={Run:'pr',Pass:'pp',Toss:'pt'};
 var DOWNS=['1st','2nd','3rd','4th'];
+// Missed play call: skips the rest of the call. Declared here because the
+// formation list is built at start-up, before the code further down runs.
+var MPC='MPC';
 var PC=['Touchdown','Fumble','Fumble (after catch)','Interception','Turnover on downs','Punt','Safety'];
 var NA=['Incomplete','D Penalty'];
 var ROSTER=[];
@@ -1749,8 +1753,6 @@ function selectListText(id, withType) {
     })
     .join('\n');
 }
-
-var MPC = 'MPC';   // missed play call: skips the rest of the call
 
 function rebuildSelectFromList(id, items) {
   var sel = document.getElementById(id);
