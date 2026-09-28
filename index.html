@@ -259,6 +259,7 @@ button{cursor:pointer;font-family:inherit}
           <option value="2nd">2nd</option>
           <option value="3rd">3rd</option>
           <option value="4th">4th</option>
+          <option value="2 pt">2 pt</option>
         </select>
       </div>
       <div class="fg"><label class="fl">Formation</label>
@@ -297,6 +298,8 @@ button{cursor:pointer;font-family:inherit}
         <option value="">&#8212;</option>
         <option value="Gain">Gain</option>
         <option value="Loss">Loss</option>
+        <option value="Good">Good</option>
+        <option value="No good">No good</option>
       </select>
       <div class="fg"><label class="fl">Result</label>
         <button type="button" class="pk-btn empty" id="pk-res" onclick="pkTap('res')"><span>&#8212;</span><span class="pk-caret">&#9662;</span></button>
@@ -304,6 +307,7 @@ button{cursor:pointer;font-family:inherit}
           <option value="">&#8212;</option>
           <option value="Gain">Gain</option>
           <option value="Loss">Loss</option>
+          <option value="No gain">No gain</option>
           <option value="Completion">Completion</option>
           <option value="Fumble">Fumble</option>
           <option value="Fumble (after catch)">Fumble (after catch)</option>
@@ -477,6 +481,13 @@ var DOWNS=['1st','2nd','3rd','4th'];
 // Missed play call: skips the rest of the call. Declared here because the
 // formation list is built at start-up, before the code further down runs.
 var MPC='MPC';
+// A two-point try: chosen by hand on the Down picker, snapped from the 3, and
+// never a numbered down.
+var TWO_PT='2 pt';
+function isTwoPt(){
+  var el=document.getElementById('dn');
+  return !!el && el.value===TWO_PT;
+}
 var PC=['Touchdown','Fumble','Fumble (after catch)','Interception','Turnover on downs','Punt','Safety'];
 var NA=['Incomplete','D Penalty'];
 var ROSTER=[];
@@ -695,7 +706,13 @@ function openPicker(fieldId, chain, chainIdx) {
   document.getElementById('picker-title').textContent = PICKER_LABELS[fieldId] || 'Select';
 
   var html = '';
-  if (fieldId === 'plyr' || fieldId === 'qb') {
+  if (fieldId === 'exec' && isTwoPt()) {
+    // On a try, Gain/Loss becomes the conversion outcome
+    document.getElementById('picker-title').textContent = '2 pt conversion';
+    ['Good','No good'].forEach(function(v){
+      html += '<div class="pen-item" onclick="pickValue(\''+v+'\')"><span>'+v+'</span></div>';
+    });
+  } else if (fieldId === 'plyr' || fieldId === 'qb') {
     html += '<div class="pen-item" onclick="pickValue(\'\')"><span>\u2014</span></div>';
     eligibleFor(fieldId).forEach(function(p){
       var v = (p.num+' '+p.name).replace(/'/g,'&#39;');
@@ -752,6 +769,22 @@ function pickValue(val) {
   // Now fire the field's existing onchange logic so auto-fill still works
   if (el && typeof el.onchange === 'function') el.onchange();
 
+  // The conversion outcome: Good is always a 3-yard gain from the 3, so it
+  // skips the keypad. No good still needs the yardage typed.
+  if (fieldId === 'exec' && isTwoPt() && val) {
+    pickerChain = null; pickerChainIdx = -1;
+    if (val === 'Good') {
+      document.getElementById('yds').value = '3';
+      if (typeof kpDisplay === 'function') kpDisplay('yds');
+      autoComp();
+      setExec('Good');
+      handoff(function(){ openPicker('plyr', null, -1); }, 140);
+    } else {
+      handoff(function(){ openKeypad('yds','Yards gained / lost',true,afterYards); }, 140);
+    }
+    return;
+  }
+
   // A missed play call skips the rest of the call and asks for the play type,
   // whether it was reached through the chain or by tapping Formation.
   if (fieldId === 'form' && val === MPC) {
@@ -779,7 +812,8 @@ function pickValue(val) {
     // Play-call chain flows straight into yards. A Money formation short-circuits
     // the rest of the call but still continues to yards.
     if (wasCall) {
-      handoff(function(){ openKeypad('yds','Yards gained / lost',true,afterYards); }, 140);
+      if (isTwoPt()) { handoff(function(){ openPicker('exec', null, -1); }, 140); }
+      else { handoff(function(){ openKeypad('yds','Yards gained / lost',true,afterYards); }, 140); }
     }
     // Ball carrier is the last step of a normal play — auto-log if enabled.
     // Only a real player selection counts; "—" leaves it to the button.
@@ -832,7 +866,10 @@ function openKeypad(fieldId, title, allowNeg, onDone) {
   document.getElementById('keypad-title').textContent = title || 'Enter value';
   var sit = document.getElementById('kp-sit');
   if (sit) {
-    if (fieldId === 'yds') {
+    if (fieldId === 'yds' && isTwoPt()) {
+      sit.style.display = 'block';
+      sit.textContent = '2 pt try';
+    } else if (fieldId === 'yds') {
       sit.style.display = 'block';
       sit.textContent = (document.getElementById('dn').value || '1st') + ' & ' + currentToGo();
     } else { sit.style.display = 'none'; }
@@ -855,7 +892,7 @@ function kpRender() {
 function kpReadout(){
   var el = document.getElementById('kp-read');
   if (!el) return;
-  if (kpField !== 'yds') { el.style.display = 'none'; return; }
+  if (kpField !== 'yds' || isTwoPt()) { el.style.display = 'none'; return; }
   el.style.display = 'block';
   var togo = currentToGo();
   var dn = document.getElementById('dn').value || '1st';
@@ -1169,7 +1206,7 @@ function onDownChange(){
 // every offensive number.
 var NO_OFFENSE = ['Punt','Safety'];
 
-var AUTO_RESULTS = ['','Gain','Loss','Completion'];
+var AUTO_RESULTS = ['','Gain','Loss','No gain','Completion'];
 
 function setExec(v){
   var el=document.getElementById('exec');
@@ -1192,12 +1229,13 @@ function autoComp(){
   var execAuto=['','Gain','Loss'];
   if(execEl && execAuto.indexOf(execEl.value)>=0){
     if(r.value==='Incomplete'){ setExec(''); }
-    else { setExec(yards<0 ? 'Loss' : 'Gain'); }
+    else { setExec(yards < 0 ? 'Loss' : (yards > 0 ? 'Gain' : '')); }
   }
 
   // --- Result field: only auto-fill values the tracker set itself ---
   if(AUTO_RESULTS.indexOf(r.value)<0) return;
-  if(pt==='Run'||pt==='Toss'){ r.value = yards>0 ? 'Gain' : 'Loss'; }
+  if(yards===0 && (pt==='Run'||pt==='Toss'||pt==='Pass')){ r.value = 'No gain'; }
+  else if(pt==='Run'||pt==='Toss'){ r.value = yards>0 ? 'Gain' : 'Loss'; }
   else if(pt==='Pass'){ r.value = 'Completion'; }
   else { r.value=''; }
 
@@ -1222,8 +1260,16 @@ function loadScore(){
     document.getElementById('opplab').textContent='OPP';
   }
 }
-function scoreResult(r){
+function scoreResult(r, p){
   if(!gid)return;
+  if(p && p.down===TWO_PT){
+    if(p.exec==='Good'){
+      games[gid].scoreUs=(games[gid].scoreUs||0)+2;
+      document.getElementById('sus').value=games[gid].scoreUs;
+      save();
+    }
+    return;
+  }
   if(r==='Touchdown'){games[gid].scoreUs=(games[gid].scoreUs||0)+6;document.getElementById('sus').value=games[gid].scoreUs;save();}
   else if(r==='Safety'){games[gid].scoreThem=(games[gid].scoreThem||0)+2;document.getElementById('sthem').value=games[gid].scoreThem;save();}
 }
@@ -1352,7 +1398,7 @@ function editPlay(id){
 
   // Down
   var dnSel=document.getElementById('dn');
-  if(dnSel && DOWNS.indexOf(p.down)>=0){ dnSel.value=p.down; }
+  if(dnSel && (DOWNS.indexOf(p.down)>=0 || p.down===TWO_PT)){ dnSel.value=p.down; }
 
   // Parse call: form, mot, hole, play
   var parts=p.call.split(' ');
@@ -1507,6 +1553,8 @@ function logPlay(){
   var yards=parseInt(yr,10);
   // A sack or a safety is always a loss, however the yardage got entered.
   if ((res==='Sack' || res==='Safety') && yards > 0) yards = -yards;
+  // A try that lost yardage costs the offence nothing.
+  if (isTwoPt() && yards < 0) yards = 0;
   var noOffense = NO_OFFENSE.indexOf(res) >= 0;
   var qbv = noOffense ? '' : (document.getElementById('qb').value.trim()||lastQB);
   var call = pc ? pc :
@@ -1537,7 +1585,7 @@ function logPlay(){
     document.getElementById('qb').value=lastQB||'';
   } else {
     games[gid].plays.push(p);
-    scoreResult(res);
+    scoreResult(res, p);
   }
   if(qbv){lastQB=qbv;}
   document.getElementById('qb').value=lastQB||'';
@@ -1600,7 +1648,9 @@ function renderLog(){
     var tc=TC[p.playtype]||'';
     return '<tr class="clickable" onclick="editPlay('+p.id+')">'+
       '<td style="width:30px">'+(p.quarter==='OT'?'OT':'Q'+p.quarter)+'</td>'+
-      '<td style="width:30px">'+(p.down||'\u2014')+'</td>'+
+      '<td style="width:30px">'+(p.down===TWO_PT
+          ? '2 pt '+(p.exec==='Good' ? '\u2713' : '\u2717')
+          : (p.down||'\u2014'))+'</td>'+
       '<td>'+p.call+'</td>'+
       '<td style="width:46px"><span class="pill '+tc+'">'+p.playtype+'</span></td>'+
       '<td class="'+yc+'" style="width:38px">'+ys+'</td>'+
@@ -1981,6 +2031,10 @@ function walkDrives(ps){
   var down=1, togo=10, rows=[];
   for (var i=0;i<ps.length;i++){
     var p=ps[i], di=DOWNS.indexOf(p.down);
+    if (p.down===TWO_PT){
+      rows.push({p:p, down:0, togo:0, converted:false, firstDown:false, penalty:false, twoPt:true});
+      down=1; togo=10; continue;
+    }
     if (p.down==='1st'){ down=1; togo=10; }
     else if (di>=0){ down=di+1; }
     var startDown=down, startTogo=togo, conv=false, pen=(p.result==='O Penalty'||p.result==='D Penalty');
@@ -2008,6 +2062,7 @@ function computeDrives(ps){
   var rows = walkDrives(ps).rows, drives = [], cur = null;
   function fresh(){ return {plays:0, yards:0, pen:false, result:null}; }
   rows.forEach(function(r){
+    if (r.twoPt) return;          // the drive ended on the touchdown before it
     if (!cur) cur = fresh();
     var noOff = NO_OFFENSE.indexOf(r.p.result) >= 0;
     if (r.penalty) cur.pen = true; else if (!noOff) cur.plays++;
@@ -2026,7 +2081,7 @@ function computeDrives(ps){
 function emptyTeam(){
   return {totYds:0,rushYds:0,passYds:0,plays:0,turnovers:0,runCalls:0,passCalls:0,
           fd:0,fdRush:0,fdPass:0,fdPen:0,
-          d3a:0,d3c:0,d4a:0,d4c:0,ptsFor:0,ptsAgn:0,w:0,l:0,t:0,games:0};
+          d3a:0,d3c:0,d4a:0,d4c:0,twoA:0,twoG:0,ptsFor:0,ptsAgn:0,w:0,l:0,t:0,games:0};
 }
 function emptyQB(){ return {att:0,comp:0,passYds:0,passTDs:0,pass1D:0,ints:0,rushAtt:0,rushYds:0,rushTDs:0,rush1D:0,sacks:0,sackYds:0}; }
 function emptyPl(){ return {rushAtt:0,rushYds:0,rushTDs:0,rush1D:0,tgts:0,rec:0,recYds:0,recTDs:0,rec1D:0}; }
@@ -2045,6 +2100,7 @@ function computeStats(ps){
       if (r.firstDown) { t.fd++; t.fdPen++; }
       return;
     }
+    if (r.twoPt){ t.twoA++; if (p.exec==='Good') t.twoG++; }
     if (isRun) t.runCalls++; else if (isPass) t.passCalls++;
     t.totYds += y;
     if (isRun) t.rushYds += y;     // a toss is a lateral, so it counts as a run
@@ -2205,7 +2261,8 @@ function stTeamCards(t, season){
     stCard('1st downs', t.fd, t.fdRush+' ru / '+t.fdPass+' pa / '+t.fdPen+' pen') +
     stCard('3rd down', t.d3c+'/'+t.d3a, pct(t.d3c,t.d3a)) +
     stCard('4th down', t.d4c+'/'+t.d4a, pct(t.d4c,t.d4a)) +
-    stCard('Turnovers', t.turnovers);
+    stCard('Turnovers', t.turnovers) +
+    (t.twoG ? stCard('2 pt', t.twoG+'/'+t.twoA, pct(t.twoG,t.twoA)) : '');
   if (season) h += stCard('Record', t.w+'-'+t.l+(t.t?'-'+t.t:''), t.games+' game'+(t.games===1?'':'s')) +
                    stCard('Points', t.ptsFor+' \u2013 '+t.ptsAgn, 'for \u2013 against');
   return h + '</div>';
@@ -2320,6 +2377,7 @@ function buildBoxScoreText(g) {
   L.push('3rd Down Conversions: ' + t.d3c + '/' + t.d3a + ' (' + pct(t.d3c,t.d3a) + ')');
   L.push('4th Down Conversions: ' + t.d4c + '/' + t.d4a + ' (' + pct(t.d4c,t.d4a) + ')');
   L.push('Turnovers: ' + t.turnovers);
+  if (t.twoG) L.push('2 pt Conversions: ' + t.twoG + '/' + t.twoA + ' (' + pct(t.twoG,t.twoA) + ')');
   L.push('');
 
   var qbLines = [];
